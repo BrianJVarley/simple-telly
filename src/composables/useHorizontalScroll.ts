@@ -28,7 +28,10 @@ export function useHorizontalScroll(containerRef: Ref<HTMLElement | null>) {
   function onWheel(e: WheelEvent) {
     const el = containerRef.value
     if (!el) return
-    if (e.deltaY !== 0) {
+    // Only remap for mouse wheels (DOM_DELTA_LINE/PAGE), not trackpad pixel scrolls.
+    // Trackpads report deltaMode === 0 (DOM_DELTA_PIXEL) and handle horizontal
+    // scrolling natively via deltaX — intercepting their deltaY breaks vertical scroll.
+    if (e.deltaX === 0 && e.deltaMode !== WheelEvent.DOM_DELTA_PIXEL && e.deltaY !== 0) {
       e.preventDefault()
       el.scrollLeft += e.deltaY
       updateScrollState()

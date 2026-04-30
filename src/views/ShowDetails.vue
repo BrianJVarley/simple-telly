@@ -5,9 +5,7 @@ const props = defineProps<{ id: string }>()
 </script>
 
 <template>
-  <div class="about">
     <ShowDetails :id="Number(props.id)" />
-  </div>
 </template>
 
 <style>

@@ -2,23 +2,25 @@
 import { useRouter } from 'vue-router'
 import { useShowDetail } from '@/composables/useShowDetail'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
+import ApiError from '@/components/ApiError.vue'
 const router = useRouter()
 const props = defineProps<{ id: number }>()
 
-const { show, seasonCount, isLoading, error } = useShowDetail(props.id)
+const { show, seasonCount, isLoading, error, fetchShow } = useShowDetail(props.id)
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen bg-gray-950 text-white p-6">
     <ArrowLeftIcon
       @click="router.back()"
-      class="w-6 h-6 self-start mb-4 text-gray-400 hover:text-white transition-colors"
+      class="mb-2 w-6 h-6 self-start mb-4 text-gray-400 hover:text-white transition-colors"
       aria-label="Close"
+      v-tooltip="'Close details view'"
     />
     <div v-if="isLoading" class="text-gray-400 text-sm" aria-busy="true" aria-live="polite">
       Loading...
     </div>
-    <div v-else-if="error" class="text-red-400 text-sm" role="alert">{{ error }}</div>
+    <ApiError v-else-if="error" :message="error" @retry="fetchShow(props.id)" />
     <div v-else-if="show" class="max-w-4xl mx-auto w-full" role="main">
       <div class="flex flex-col sm:flex-row gap-6">
         <img

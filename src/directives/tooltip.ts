@@ -1,9 +1,47 @@
 import type { Directive } from 'vue'
 
-const tooltip: Directive<HTMLElement, string> = {
+type Placement = 'top' | 'bottom' | 'left' | 'right'
+type TooltipBinding = string | { text: string; placement?: Placement }
+
+interface TooltipElement extends HTMLElement {
+  _tooltip?: HTMLElement
+  _showTooltip?: () => void
+  _hideTooltip?: () => void
+}
+
+function parseBinding(value: TooltipBinding): { text: string; placement: Placement } {
+  if (typeof value === 'string') return { text: value, placement: 'top' }
+  return { text: value.text, placement: value.placement ?? 'top' }
+}
+
+function positionTip(tip: HTMLElement, el: HTMLElement, placement: Placement) {
+  const rect = el.getBoundingClientRect()
+  const gap = 6
+  switch (placement) {
+    case 'bottom':
+      tip.style.left = `${rect.left + rect.width / 2 - tip.offsetWidth / 2 + window.scrollX}px`
+      tip.style.top = `${rect.bottom + gap + window.scrollY}px`
+      break
+    case 'left':
+      tip.style.left = `${rect.left - tip.offsetWidth - gap + window.scrollX}px`
+      tip.style.top = `${rect.top + rect.height / 2 - tip.offsetHeight / 2 + window.scrollY}px`
+      break
+    case 'right':
+      tip.style.left = `${rect.right + gap + window.scrollX}px`
+      tip.style.top = `${rect.top + rect.height / 2 - tip.offsetHeight / 2 + window.scrollY}px`
+      break
+    case 'top':
+    default:
+      tip.style.left = `${rect.left + rect.width / 2 - tip.offsetWidth / 2 + window.scrollX}px`
+      tip.style.top = `${rect.top - tip.offsetHeight - gap + window.scrollY}px`
+  }
+}
+
+const tooltip: Directive<TooltipElement, TooltipBinding> = {
   mounted(el, binding) {
+    const { text } = parseBinding(binding.value)
     const tip = document.createElement('div')
-    tip.textContent = binding.value
+    tip.textContent = text
     tip.style.cssText = `
       position: absolute;
       background: #1f2937;
@@ -21,24 +59,24 @@ const tooltip: Directive<HTMLElement, string> = {
     el._tooltip = tip
 
     el._showTooltip = () => {
-      const rect = el.getBoundingClientRect()
-      tip.style.left = `${rect.left + rect.width / 2 - tip.offsetWidth / 2 + window.scrollX}px`
-      tip.style.top = `${rect.top - tip.offsetHeight - 6 + window.scrollY}px`
+      positionTip(tip, el, parseBinding(binding.value).placement)
       tip.style.opacity = '1'
     }
-    el._hideTooltip = () => { tip.style.opacity = '0' }
+    el._hideTooltip = () => {
+      tip.style.opacity = '0'
+    }
 
     el.addEventListener('mouseenter', el._showTooltip)
     el.addEventListener('mouseleave', el._hideTooltip)
   },
 
   updated(el, binding) {
-    if (el._tooltip) el._tooltip.textContent = binding.value
+    if (el._tooltip) el._tooltip.textContent = parseBinding(binding.value).text
   },
 
   unmounted(el) {
-    el.removeEventListener('mouseenter', el._showTooltip)
-    el.removeEventListener('mouseleave', el._hideTooltip)
+    if (el._showTooltip) el.removeEventListener('mouseenter', el._showTooltip)
+    if (el._hideTooltip) el.removeEventListener('mouseleave', el._hideTooltip)
     el._tooltip?.remove()
   },
 }

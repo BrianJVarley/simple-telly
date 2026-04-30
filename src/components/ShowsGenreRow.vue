@@ -1,15 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHorizontalScroll } from '@/composables/useHorizontalScroll'
 import type { Show } from '@/types/tvShowModel'
 
 defineProps<{ genre: string; shows: Show[] }>()
+const emit = defineEmits<{
+  loadNextPage: []
+  loadPreviousPage: []
+}>()
 
 const router = useRouter()
 const hScrollContainer = ref<HTMLElement | null>(null)
 const { canScrollLeft, canScrollRight, scrollLeft, scrollRight } =
   useHorizontalScroll(hScrollContainer)
+
+watch(canScrollRight, (can) => {
+  if (!can) emit('loadNextPage')
+})
+
+watch(canScrollLeft, (can, prev) => {
+  if (!can && prev) emit('loadPreviousPage')
+})
 
 function navigateToShowDetails(showId: number) {
   router.push({ name: 'show-details', params: { id: showId } })
@@ -17,7 +29,7 @@ function navigateToShowDetails(showId: number) {
 </script>
 
 <template>
-  <div class="bg-gray-900 pb-4">
+  <div class="bg-gray-900 pb-4 pr-4 pl-4">
     <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">
       {{ genre }}
     </h2>

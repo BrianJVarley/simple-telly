@@ -1,83 +1,43 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from "vue-router";
+import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-  <header>
-    <img
-      alt="Simple Telly logo"
-      class="logo"
-      src="@/assets/smtv-logo.svg"
-      width="40"
-      height="40"
+  <div class="min-h-screen flex flex-col bg-gray-950 text-white">
+    <header
+      class="flex items-center gap-3 bg-gray-900 border-b border-gray-800 px-4 py-3 flex-shrink-0"
     >
-  <img/>
-    
-  </header>
+      <RouterLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <img
+          src="@/assets/smtv-logo.svg"
+          alt="Simple Telly"
+          width="28"
+          height="28"
+          class="rounded"
+        />
+        <span class="text-white font-semibold text-lg tracking-tight">Simple Telly</span>
+      </RouterLink>
+    </header>
 
-  <RouterView />
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <RouterView v-slot="{ Component }">
+        <KeepAlive :include="['HomeView']">
+          <component :is="Component" />
+        </KeepAlive>
+      </RouterView>
+    </main>
+
+    <footer
+      class="flex-shrink-0 bg-gray-900 border-t border-gray-800 text-gray-500 text-xs text-center py-3 px-4"
+    >
+      &copy; {{ new Date().getFullYear() }} Simple Telly &mdash; Show data provided by
+      <a
+        href="https://www.tvmaze.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="underline hover:text-gray-300 transition-colors"
+        >TVMaze</a
+      >
+    </footer>
+  </div>
 </template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
-</style>

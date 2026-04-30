@@ -2,20 +2,29 @@
 import { useShowList } from '@/composables/useShowList'
 import { useShowSearch } from '@/composables/useShowSearch'
 import ShowsGenreRow from '@/components/ShowsGenreRow.vue'
+import ApiError from '@/components/ApiError.vue'
 import { ref, watch } from 'vue'
 import { useVirtualList } from '@vueuse/core'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { MagnifyingGlassCircleIcon } from '@heroicons/vue/24/outline'
+import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 
+const breakpoints = useBreakpoints(breakpointsTailwind)
+const isMobileBp = breakpoints.smaller('md')
 const router = useRouter()
+const route = useRoute()
 const { results, isLoading, error, search, clear } = useShowSearch()
+const initialPage = Number(route.query.page ?? 1)
 const {
   shows,
   showsSortedByGenre,
+  currentPage,
+  nextPage,
+  previousPage,
   isLoading: isLoadingShows,
   error: showsListError,
-  refresh,
-} = useShowList({ type: 'schedule' })
+  refresh: refreshShows,
+} = useShowList({ page: initialPage })
 const { list, containerProps, wrapperProps } = useVirtualList(shows, {
   itemHeight: 120,
 })
@@ -37,6 +46,9 @@ function toggleSearch() {
 }
 
 watch(query, (q) => search(q))
+watch(currentPage, (page) => {
+  router.replace({ query: { page } })
+})
 </script>
 
 <template>
@@ -47,9 +59,9 @@ watch(query, (q) => search(q))
   >
     <MagnifyingGlassCircleIcon
       @click="toggleSearch"
-      class="w-6 h-6 text-gray-400"
+      class="ml-4 w-6 h-6 text-gray-400"
       aria-hidden="true"
-      v-tooltip="'Toggle search'"
+      v-tooltip="{ text: 'Toggle search', placement: 'right' }"
     />
     <Transition name="fade">
       <div
@@ -78,13 +90,11 @@ watch(query, (q) => search(q))
     </Transition>
   </div>
 
-  <div role="region" aria-label="Featured shows by genre">
+  <div v-if="!isMobileBp" role="region" aria-label="Featured shows by genre">
     <div v-if="isLoadingShows" class="text-gray-400 text-sm px-4 py-3" aria-busy="true">
       Loading shows...
     </div>
-    <div v-else-if="showsListError" class="text-red-400 text-sm px-4 py-3" role="alert">
-      {{ showsListError }}
-    </div>
+    <ApiError v-else-if="showsListError" :message="showsListError" @retry="refreshShows()" />
     <template v-else>
       <div v-if="!results.length">
         <ShowsGenreRow
@@ -92,11 +102,13 @@ watch(query, (q) => search(q))
           :key="genre"
           :genre="genre"
           :shows="genreShows"
+          @loadNextPage="nextPage()"
+          @loadPreviousPage="previousPage()"
         />
       </div>
     </template>
   </div>
-  <div class="flex flex-col h-screen bg-gray-950 text-white">
+  <div class="flex flex-col flex-1 overflow-hidden bg-gray-950 text-white">
     <div
       v-if="query"
       class="flex-1 overflow-y-auto p-4"
@@ -134,47 +146,50 @@ watch(query, (q) => search(q))
       </div>
     </div>
 
-    <div
-      v-else
-      v-bind="containerProps"
-      class="flex-1 overflow-y-auto p-4"
-      role="region"
-      aria-label="Today's schedule"
-    >
-      <div v-if="isLoadingShows" class="text-gray-400 text-sm p-4" aria-busy="true">
-        Loading schedule...
-      </div>
-      <div v-else-if="showsListError" class="text-red-400 text-sm p-4" role="alert">
-        {{ showsListError }}
-      </div>
-      <div v-else v-bind="wrapperProps" role="list">
-        <div
-          v-for="{ data: show } in list"
-          :key="show.id"
-          role="listitem"
-          :aria-label="show.name"
-          tabindex="0"
-          @click="navigateToShowDetails(show.id)"
-          @keydown.enter="navigateToShowDetails(show.id)"
-          class="flex items-center gap-4 py-2 border-b border-gray-800 hover:bg-gray-800 rounded px-2 cursor-pointer"
-        >
-          <img
-            :src="show.image?.medium"
-            :alt="show.name"
-            class="show-image w-12 h-16 object-cover rounded flex-shrink-0"
-          />
-          <div class="min-w-0">
-            <p class="font-medium truncate">{{ show.name }}</p>
-            <p class="text-xs text-gray-400 truncate">{{ show.genres?.join(', ') }}</p>
-            <p class="text-xs text-gray-400 truncate">
-              Rating {{ show.rating.average }}
-              <span
-                v-tooltip="'Top rated show'"
-                v-if="(show.rating?.average ?? 0) >= 7.5"
-                aria-label="Top rated"
-                >⭐</span
-              >
-            </p>
+    <div v-if="isMobileBp">
+      <div
+        v-bind="containerProps"
+        class="flex-1 overflow-y-auto p-4"
+        role="region"
+        aria-label="Today's schedule"
+      >
+        <div v-if="isLoadingShows" class="text-gray-400 text-sm p-4" aria-busy="true">
+          Loading schedule...
+        </div>
+        <div v-else-if="showsListError" class="text-red-400 text-sm p-4" role="alert">
+          {{ showsListError }}
+        </div>
+        <div v-else v-bind="wrapperProps" role="list">
+          <div
+            v-for="{ data: show } in list"
+            :key="show.id"
+            role="listitem"
+            :aria-label="show.name"
+            tabindex="0"
+            @click="navigateToShowDetails(show.id)"
+            @keydown.enter="navigateToShowDetails(show.id)"
+            class="flex items-center gap-4 py-2 border-b border-gray-800 hover:bg-gray-800 rounded px-2 cursor-pointer"
+          >
+            <img
+              :src="show.image?.medium"
+              :alt="show.name"
+              class="show-image w-12 h-16 object-cover rounded flex-shrink-0"
+            />
+            <div class="min-w-0">
+              <p class="font-medium truncate">{{ show.name }}</p>
+              <p class="text-xs text-gray-400 truncate">
+                {{ show.genres?.join(', ') ?? 'Unknown Genre' }}
+              </p>
+              <p class="text-xs text-gray-400 truncate">
+                Rating {{ show.rating.average ?? 'N/A' }}
+                <span
+                  v-tooltip="'Top rated show'"
+                  v-if="(show.rating?.average ?? 0) >= 7.5"
+                  aria-label="Top rated"
+                  >⭐</span
+                >
+              </p>
+            </div>
           </div>
         </div>
       </div>

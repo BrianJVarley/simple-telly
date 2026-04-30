@@ -6,12 +6,10 @@ import { useShowsStore } from '@/stores/shows'
 export type ListType = 'search' | 'schedule'
 
 export interface UseShowListOptions {
-  type: 'schedule'
-  date?: string
-  countryCode?: string
+  page?: number
 }
 
-export function useShowList(options: UseShowListOptions) {
+export function useShowList(options?: UseShowListOptions) {
   const showsStore = useShowsStore()
 
   const ids = ref<number[]>([])
@@ -33,22 +31,33 @@ export function useShowList(options: UseShowListOptions) {
     }, new Map<string, Show[]>())
   })
 
-  async function load() {
+  const currentPage = ref<number>(options?.page ?? 0)
+
+  async function load(page?: number) {
+    const targetPage = page ?? currentPage.value
+    currentPage.value = targetPage
     isLoading.value = true
     error.value = null
 
     try {
       let data: Show[] = []
-
-      const episodes = await tvmazeApi.getSchedule(options.date, options.countryCode)
-      data = episodes.map((e) => e.show).filter((s): s is Show => s != null)
-
+      data = await tvmazeApi.getShows(targetPage)
       showsStore.upsertMany(data)
       ids.value = data.map((s) => s.id)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load shows'
     } finally {
       isLoading.value = false
+    }
+  }
+
+  function nextPage() {
+    return load(currentPage.value + 1)
+  }
+
+  function previousPage() {
+    if (currentPage.value > 0) {
+      return load(currentPage.value - 1)
     }
   }
 
@@ -61,6 +70,9 @@ export function useShowList(options: UseShowListOptions) {
   return {
     shows: computed(() => Array.from(showsSortedByGenre.value.values()).flat()),
     showsSortedByGenre,
+    currentPage,
+    nextPage,
+    previousPage,
     isLoading,
     error,
     refresh,

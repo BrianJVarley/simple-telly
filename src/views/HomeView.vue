@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ShowsView from "../components/Shows.vue";
+import ShowsView from '../components/ShowsHome.vue'
 </script>
 
 <template>

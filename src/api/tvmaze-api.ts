@@ -1,8 +1,6 @@
-import type { SearchResult, Show, Episode } from "@/types/tvShowModel"
+import type { SearchResult, Show, Episode } from '@/types/tvShowModel'
 
 const BASE_URL = 'https://api.tvmaze.com'
-
-
 
 async function apiFetch<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`)
@@ -16,15 +14,11 @@ export const tvmazeApi = {
   searchShows: (query: string) =>
     apiFetch<SearchResult[]>(`/search/shows?q=${encodeURIComponent(query)}`),
 
-  getShow: (id: number) =>
-    apiFetch<Show>(`/shows/${id}`),
+  getShow: (id: number) => apiFetch<Show>(`/shows/${id}`),
 
-  getShowEpisodes: (showId: number) =>
-    apiFetch<Episode[]>(`/shows/${showId}/episodes`),
+  getShowEpisodes: (showId: number) => apiFetch<Episode[]>(`/shows/${showId}/episodes`),
 
-  getEpisode: (episodeId: number) =>
-    apiFetch<Episode>(`/episodes/${episodeId}`),
+  getEpisode: (episodeId: number) => apiFetch<Episode>(`/episodes/${episodeId}`),
 
-  getSchedule: (date?: string, countryCode = 'US') =>
-    apiFetch<Episode[]>(`/schedule?country=${countryCode}${date ? `&date=${date}` : ''}`),
+  getShows: (page: number = 1) => apiFetch<Show[]>(`/shows?page=${page}`),
 }
