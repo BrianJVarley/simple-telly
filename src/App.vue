@@ -5,22 +5,14 @@ import { RouterLink, RouterView } from "vue-router";
 <template>
   <header>
     <img
-      alt="Vue logo"
+      alt="Simple Telly logo"
       class="logo"
-      src="@/assets/logo.svg"
-      width="125"
-      height="125"
-    />
-
-    <div class="wrapper">
-      <h1 class="text-3xl font-bold text-center lg:text-left">
-        Welcome to Simple Telly
-      </h1>
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
+      src="@/assets/smtv-logo.svg"
+      width="40"
+      height="40"
+    >
+  <img/>
+    
   </header>
 
   <RouterView />

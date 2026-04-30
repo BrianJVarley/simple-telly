@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
 import type { Show, Episode } from '@/types/tvShowModel'
@@ -34,6 +34,11 @@ export function useShowDetail(showId: number) {
     }
   }
 
+  const seasonCount = computed(() => {
+    const seasons = new Set(episodes.value.map((ep) => ep.season))
+    return seasons.size;
+  });
+
   const episodesBySeason = (): Map<number, Episode[]> => {
     return episodes.value.reduce((map, ep) => {
       const list = map.get(ep.season) ?? []
@@ -45,5 +50,5 @@ export function useShowDetail(showId: number) {
 
   watch(() => showId, fetchShow, { immediate: true })
 
-  return { show, episodes, episodesBySeason, isLoading, error, fetchShow }
+  return { show, episodes, episodesBySeason, seasonCount, isLoading, error, fetchShow }
 }

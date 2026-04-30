@@ -1,6 +1,12 @@
+<script setup lang="ts">
+import ShowDetails from '../components/ShowDetails.vue'
+
+const props = defineProps<{ id: string }>()
+</script>
+
 <template>
   <div class="about">
-    <h1>This is an about page</h1>
+    <ShowDetails :id="Number(props.id)" />
   </div>
 </template>
 

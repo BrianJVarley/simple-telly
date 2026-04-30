@@ -4,10 +4,12 @@ export function useHorizontalScroll(containerRef: Ref<HTMLElement | null>) {
   const canScrollLeft = ref(false)
   const canScrollRight = ref(false)
 
+  let resizeObserver: ResizeObserver | null = null
+
   function updateScrollState() {
     const el = containerRef.value
     if (!el) return
-    canScrollLeft.value = el.scrollLeft > 0
+    canScrollLeft.value = el.scrollLeft > 0.1
     canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
   }
 
@@ -39,13 +41,20 @@ export function useHorizontalScroll(containerRef: Ref<HTMLElement | null>) {
     el.addEventListener('scroll', updateScrollState, { passive: true })
     el.addEventListener('wheel', onWheel, { passive: false })
     updateScrollState()
+
+    resizeObserver = new ResizeObserver(updateScrollState)
+    resizeObserver.observe(el)
+    // also observe the inner content for width changes
+    if (el.firstElementChild) resizeObserver.observe(el.firstElementChild)
   })
 
   onUnmounted(() => {
     const el = containerRef.value
-    if (!el) return
-    el.removeEventListener('scroll', updateScrollState)
-    el.removeEventListener('wheel', onWheel)
+    if (el) {
+      el.removeEventListener('scroll', updateScrollState)
+      el.removeEventListener('wheel', onWheel)
+    }
+    resizeObserver?.disconnect()
   })
 
   return { canScrollLeft, canScrollRight, scrollLeft, scrollRight, updateScrollState }

@@ -18,9 +18,20 @@ export function useShowList(options: UseShowListOptions) {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  const shows = computed(
-    () => ids.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[],
-  )
+  const shows = computed(() => {
+    const list = ids.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
+    return list.sort((a, b) => (b.rating.average ?? 0) - (a.rating.average ?? 0))
+  })
+
+  const showsSortedByGenre = computed(() => {
+    return shows.value.reduce((map, show) => {
+      const genreKey = show.genres[0] ?? 'Other'
+      const list = map.get(genreKey) ?? []
+      list.push(show)
+      map.set(genreKey, list)
+      return map
+    }, new Map<string, Show[]>())
+  })
 
   async function load() {
     isLoading.value = true
@@ -47,5 +58,11 @@ export function useShowList(options: UseShowListOptions) {
 
   onMounted(load)
 
-  return { shows, isLoading, error, refresh }
+  return {
+    shows: computed(() => Array.from(showsSortedByGenre.value.values()).flat()),
+    showsSortedByGenre,
+    isLoading,
+    error,
+    refresh,
+  }
 }
