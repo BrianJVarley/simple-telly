@@ -1,27 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHorizontalScroll } from '@/composables/useHorizontalScroll'
 import type { Show } from '@/types/tvShowModel'
 
 defineProps<{ genre: string; shows: Show[] }>()
-const emit = defineEmits<{
-  loadNextPage: []
-  loadPreviousPage: []
-}>()
 
 const router = useRouter()
 const hScrollContainer = ref<HTMLElement | null>(null)
 const { canScrollLeft, canScrollRight, scrollLeft, scrollRight } =
   useHorizontalScroll(hScrollContainer)
-
-watch(canScrollRight, (can) => {
-  if (!can) emit('loadNextPage')
-})
-
-watch(canScrollLeft, (can, prev) => {
-  if (!can && prev) emit('loadPreviousPage')
-})
 
 function navigateToShowDetails(showId: number) {
   router.push({ name: 'show-details', params: { id: showId } })
@@ -29,17 +17,20 @@ function navigateToShowDetails(showId: number) {
 </script>
 
 <template>
-  <div class="bg-gray-900 pb-4 pr-4 pl-4">
-    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">
+  <div class="genre-row-shell pb-4 pr-4 pl-4">
+    <h2
+      id="genreHeader"
+      class="genre-row-title text-sm pb-2 font-semibold uppercase tracking-wider px-4 pt-3 pb-1"
+    >
       {{ genre }}
     </h2>
-    <div class="flex items-center gap-1">
+    <tr aria-labelledby="genreHeader" class="flex items-center gap-1">
       <button
         @click="scrollLeft"
         :disabled="!canScrollLeft"
         :aria-label="`Scroll ${genre} left`"
-        class="flex-shrink-0 text-2xl px-2 transition-colors"
-        :class="canScrollLeft ? 'text-gray-400 hover:text-white' : 'text-gray-700 cursor-default'"
+        class="genre-nav-btn flex-shrink-0 text-2xl px-2 transition-colors"
+        :class="canScrollLeft ? 'genre-nav-btn-enabled' : 'genre-nav-btn-disabled cursor-default'"
       >
         ‹
       </button>
@@ -53,6 +44,7 @@ function navigateToShowDetails(showId: number) {
         <div
           v-for="show in shows"
           :key="show.id"
+          v-memo="[show.id, show.name, show.rating.average, show.image?.medium]"
           role="listitem"
           :aria-label="show.name"
           tabindex="0"
@@ -63,11 +55,12 @@ function navigateToShowDetails(showId: number) {
           <img
             :src="show.image?.medium"
             :alt="show.name"
+            loading="lazy"
             class="w-full h-32 object-cover rounded-lg"
           />
-          <div class="min-w-0 px-0.5">
+          <div class="min-w-0 px-0.5 pb-1">
             <p class="text-xs font-medium truncate mt-1">{{ show.name }}</p>
-            <p class="text-xs text-gray-400 truncate">
+            <p class="genre-rating text-xs truncate">
               {{ show.rating.average ?? '—' }}
               <span
                 v-tooltip="'Top rated show'"
@@ -83,11 +76,34 @@ function navigateToShowDetails(showId: number) {
         @click="scrollRight"
         :disabled="!canScrollRight"
         :aria-label="`Scroll ${genre} right`"
-        class="flex-shrink-0 text-2xl px-2 transition-colors"
-        :class="canScrollRight ? 'text-gray-400 hover:text-white' : 'text-gray-700 cursor-default'"
+        class="genre-nav-btn flex-shrink-0 text-2xl px-2 transition-colors"
+        :class="canScrollRight ? 'genre-nav-btn-enabled' : 'genre-nav-btn-disabled cursor-default'"
       >
         ›
       </button>
-    </div>
+    </tr>
   </div>
 </template>
+
+<style scoped>
+.genre-row-shell {
+  background-color: var(--color-background-soft);
+}
+
+.genre-row-title,
+.genre-rating {
+  color: var(--color-text-muted);
+}
+
+.genre-nav-btn-enabled {
+  color: var(--color-text-muted);
+}
+
+.genre-nav-btn-enabled:hover {
+  color: var(--color-text);
+}
+
+.genre-nav-btn-disabled {
+  color: var(--color-border-hover);
+}
+</style>

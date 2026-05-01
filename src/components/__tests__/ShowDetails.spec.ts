@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { ref } from 'vue'
@@ -20,6 +20,8 @@ vi.mock('@heroicons/vue/24/outline', () => ({
 vi.mock('@/composables/useShowDetail', () => ({
   useShowDetail: useShowDetailMock,
 }))
+
+const mountedWrappers: { unmount: () => void }[] = []
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 const makeShow = (overrides: Partial<Show> = {}): Show => ({
@@ -44,19 +46,28 @@ const defaultDetailReturn = (overrides = {}) => ({
   episodesBySeason: () => new Map(),
   seasonCount: ref(0),
   isLoading: ref(false),
-  error: ref<string | null>(null),
+  error: ref<{ message: string; cause?: string } | null>(null),
   fetchShow: vi.fn(),
   ...overrides,
 })
 
 function mkWrapper(id = 1) {
-  return mount(ShowDetails, {
+  const w = mount(ShowDetails, {
+    attachTo: document.body,
     props: { id },
     global: {
       plugins: [createPinia()],
       directives: { tooltip: {} },
+      stubs: {
+        ApiError: {
+          template: '<div role="alert">{{ message }}</div>',
+          props: ['message'],
+        },
+      },
     },
   })
+  mountedWrappers.push(w)
+  return w
 }
 
 // ── tests ────────────────────────────────────────────────────────────────────
@@ -64,6 +75,10 @@ describe('ShowDetails', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useShowDetailMock.mockReturnValue(defaultDetailReturn())
+  })
+
+  afterEach(() => {
+    mountedWrappers.splice(0).forEach((w) => w.unmount())
   })
 
   it('shows loading state while fetching', () => {
@@ -79,7 +94,9 @@ describe('ShowDetails', () => {
   })
 
   it('shows error message when fetch fails', () => {
-    useShowDetailMock.mockReturnValue(defaultDetailReturn({ error: ref('Failed to load show') }))
+    useShowDetailMock.mockReturnValue(
+      defaultDetailReturn({ error: ref({ message: 'Failed to load show' }) }),
+    )
     const wrapper = mkWrapper()
     expect(wrapper.find('[role="alert"]').text()).toContain('Failed to load show')
   })
@@ -198,6 +215,20 @@ describe('ShowDetails', () => {
     const wrapper = mkWrapper()
     await wrapper.find('.back-btn').trigger('click')
     expect(mockRouterBack).toHaveBeenCalled()
+  })
+
+  it('calls router.back() when Escape key is pressed', async () => {
+    mkWrapper()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    expect(mockRouterBack).toHaveBeenCalled()
+  })
+
+  it('removes the Escape listener when the component is unmounted', async () => {
+    const wrapper = mkWrapper()
+    wrapper.unmount()
+    mockRouterBack.mockClear()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    expect(mockRouterBack).not.toHaveBeenCalled()
   })
 
   it('passes the id prop to useShowDetail', () => {

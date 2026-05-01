@@ -2,13 +2,16 @@ import { computed, ref, watch } from 'vue'
 import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
 import type { Show, Episode } from '@/types/tvShowModel'
+import type { ApiErrorTypes } from '@/types/apiErrorModel'
 export function useShowDetail(showId: number) {
   const showsStore = useShowsStore()
 
   const show = ref<Show | null>(null)
   const episodes = ref<Episode[]>([])
   const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const error = ref<{ message: string; cause?: keyof typeof ApiErrorTypes | undefined } | null>(
+    null,
+  )
 
   async function fetchShow(id: number) {
     const cached = showsStore.getById(id)
@@ -28,7 +31,14 @@ export function useShowDetail(showId: number) {
       episodes.value = episodeData
       showsStore.upsert(showData)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load show'
+      if (err instanceof Error) {
+        error.value = {
+          message: err.message,
+          cause: (err as Error).cause as keyof typeof ApiErrorTypes | undefined,
+        }
+      } else {
+        error.value = { message: 'Failed to load show' }
+      }
     } finally {
       isLoading.value = false
     }
@@ -36,8 +46,8 @@ export function useShowDetail(showId: number) {
 
   const seasonCount = computed(() => {
     const seasons = new Set(episodes.value.map((ep) => ep.season))
-    return seasons.size;
-  });
+    return seasons.size
+  })
 
   const episodesBySeason = (): Map<number, Episode[]> => {
     return episodes.value.reduce((map, ep) => {

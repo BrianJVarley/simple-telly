@@ -56,14 +56,14 @@ describe('tvmazeApi', () => {
     })
   })
 
-  describe('getSchedule', () => {
-    it('defaults to US country code', async () => {
+  describe('getShows', () => {
+    it('defaults to page 1 query param', async () => {
       mockResponse([])
       await tvmazeApi.getShows()
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('country=US'))
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'))
     })
 
-    it('uses provided country code', async () => {
+    it('uses provided page number', async () => {
       mockResponse([])
       await tvmazeApi.getShows(1)
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'))
@@ -73,7 +73,7 @@ describe('tvmazeApi', () => {
   describe('error handling', () => {
     it('throws on non-ok response', async () => {
       mockResponse(null, false, 404)
-      await expect(tvmazeApi.getShow(999)).rejects.toThrow('TVMaze API error: 404')
+      await expect(tvmazeApi.getShow(999)).rejects.toThrow('Page not found: 404 Not Found')
     })
   })
 })

@@ -1,73 +1,93 @@
-# simple-telly
+# Simple Telly
 
-This template should help get you started developing with Vue 3 in Vite.
+A Vue 3 app for browsing TV shows, searching by title, and viewing show details.
 
-## Recommended IDE Setup
+## Quick Start (Reviewer)
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+### 1. Requirements
 
-## Recommended Browser Setup
+- Node.js `^20.19.0` or `>=22.12.0`
+- npm
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+### 2. Install
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### 3. Run locally
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+Open the URL printed by Vite (typically `http://localhost:5173`).
+
+## What To Review In The App
+
+### Main flows
+
+- Shows list view: `/` or `/shows?page=1`
+- Show details view: `/show/:id`
+- Search and clear interactions in the header area
+- Pagination and genre-row browsing
+
+### UX / design choices
+
+- Responsive layout with desktop and mobile show presentations
+- Theme system with light/dark mode toggle and persisted user preference
+- Semantic color tokens defined in [src/assets/base.css](src/assets/base.css)
+- Focus on readable contrast and accessible text/background pairings
+
+## Project Design (High Level)
+
+- Framework: Vue 3 + Vite + TypeScript
+- State: Pinia stores in [src/stores](src/stores)
+- Routing: [src/router/index.ts](src/router/index.ts)
+- Data access: API layer in [src/api/tvmaze-api.ts](src/api/tvmaze-api.ts)
+- UI composition:
+- Views in [src/views](src/views)
+- Reusable components in [src/components](src/components)
+- Behavior extracted into composables in [src/composables](src/composables)
+
+## Test Commands
+
+### Unit tests (Vitest)
 
 ```sh
-npm run build
+npm test
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+### End-to-end tests (Playwright)
 
 ```sh
-npm run test:unit
-```
-
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
-
-```sh
-# Install browsers for the first run
+# first time only
 npx playwright install
 
-# When testing on CI, must build the project first
-npm run build
-
-# Runs the end-to-end tests
+# full e2e suite
 npm run test:e2e
-# Runs the tests only on Chromium
-npm run test:e2e -- --project=chromium
-# Runs the tests of a specific file
-npm run test:e2e -- tests/example.spec.ts
-# Runs the tests in debug mode
-npm run test:e2e -- --debug
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+Notes:
+
+- Playwright runs Chromium and Firefox by default.
+- WebKit is currently disabled in [playwright.config.ts](playwright.config.ts) because of Apple Silicon WebKit instability.
+
+### Type check and build
+
+```sh
+npm run type-check
+npm run build
+```
+
+### Lint
 
 ```sh
 npm run lint
 ```
+
+## Useful Files
+
+- App shell and theme toggle: [src/App.vue](src/App.vue)
+- Theme tokens: [src/assets/base.css](src/assets/base.css)
+- E2E tests: [e2e/simple-telly.spec.ts](e2e/vue.spec.ts)

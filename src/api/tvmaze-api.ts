@@ -1,11 +1,17 @@
+import { ApiErrorTypes } from '@/types/apiErrorModel'
 import type { SearchResult, Show, Episode } from '@/types/tvShowModel'
 
 const BASE_URL = 'https://api.tvmaze.com'
-
 async function apiFetch<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`)
   if (!response.ok) {
-    throw new Error(`TVMaze API error: ${response.status} ${response.statusText}`)
+
+    if (response.status === 404) {
+      throw new Error(`Page not found: ${response.status} ${response.statusText}`, {
+        cause: ApiErrorTypes['Not Found'],
+      })
+    }
+    throw new Error(`API error: ${response.status} ${response.statusText}`)
   }
   return response.json() as Promise<T>
 }

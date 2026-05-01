@@ -2,11 +2,30 @@ import { ref, computed, onMounted } from 'vue'
 import type { Show } from '@/types/tvShowModel'
 import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
-
-export type ListType = 'search' | 'schedule'
+import { ApiErrorTypes } from '@/types/apiErrorModel'
 
 export interface UseShowListOptions {
   page?: number
+}
+
+interface LoadOptions {
+  append?: boolean
+  suppressNotFoundError?: boolean
+}
+
+type ApiErrorCause = keyof typeof ApiErrorTypes
+
+function getErrorCause(err: unknown): ApiErrorCause | undefined {
+  if (typeof err !== 'object' || err === null || !('cause' in err)) {
+    return undefined
+  }
+
+  const cause = (err as { cause?: unknown }).cause
+  if (typeof cause === 'string' && cause in ApiErrorTypes) {
+    return cause as ApiErrorCause
+  }
+
+  return undefined
 }
 
 export function useShowList(options?: UseShowListOptions) {
@@ -14,38 +33,73 @@ export function useShowList(options?: UseShowListOptions) {
 
   const ids = ref<number[]>([])
   const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const hasMorePages = ref(true)
+  const isAccumulated = ref(false)
+  const error = ref<{ message: string; cause?: ApiErrorCause | undefined } | null>(null)
 
   const shows = computed(() => {
-    const list = ids.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
-    return list.sort((a, b) => (b.rating.average ?? 0) - (a.rating.average ?? 0))
+    return ids.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
+  })
+
+  const rankedShows = computed(() => {
+    return [...shows.value].sort((a, b) => (b.rating.average ?? 0) - (a.rating.average ?? 0))
   })
 
   const showsSortedByGenre = computed(() => {
-    return shows.value.reduce((map, show) => {
+    const unsorted = rankedShows.value.reduce((map, show) => {
       const genreKey = show.genres[0] ?? 'Other'
       const list = map.get(genreKey) ?? []
       list.push(show)
       map.set(genreKey, list)
       return map
     }, new Map<string, Show[]>())
+
+    return new Map([...unsorted.entries()].sort(([a], [b]) => a.localeCompare(b)))
   })
 
   const currentPage = ref<number>(options?.page ?? 0)
 
-  async function load(page?: number) {
+  async function load(page?: number, loadOptions: LoadOptions = {}) {
     const targetPage = page ?? currentPage.value
-    currentPage.value = targetPage
+    const { append = false, suppressNotFoundError = false } = loadOptions
+
+    if (append && (!hasMorePages.value || isLoading.value)) {
+      return
+    }
+
     isLoading.value = true
     error.value = null
 
     try {
-      let data: Show[] = []
-      data = await tvmazeApi.getShows(targetPage)
+      const data = await tvmazeApi.getShows(targetPage)
+      const nextIds = data.map((show) => show.id)
+
       showsStore.upsertMany(data)
-      ids.value = data.map((s) => s.id)
+
+      if (append) {
+        const existingIds = new Set(ids.value)
+        ids.value = [...ids.value, ...nextIds.filter((id) => !existingIds.has(id))]
+      } else {
+        ids.value = nextIds
+      }
+
+      currentPage.value = targetPage
+      hasMorePages.value = data.length > 0
+      isAccumulated.value = append
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load shows'
+      const cause = getErrorCause(err)
+
+      if (append && cause === ApiErrorTypes['Not Found']) {
+        hasMorePages.value = false
+      } else if (err instanceof Error) {
+        error.value = { message: err.message, cause }
+      } else {
+        error.value = { message: 'Failed to load shows' }
+      }
+
+      if (append && suppressNotFoundError && cause === ApiErrorTypes['Not Found']) {
+        error.value = null
+      }
     } finally {
       isLoading.value = false
     }
@@ -55,24 +109,37 @@ export function useShowList(options?: UseShowListOptions) {
     return load(currentPage.value + 1)
   }
 
+  function appendNextPage() {
+    return load(currentPage.value + 1, { append: true, suppressNotFoundError: true })
+  }
+
   function previousPage() {
     if (currentPage.value > 0) {
       return load(currentPage.value - 1)
     }
   }
 
+  function goToFirstPage() {
+    return load(0)
+  }
+
   function refresh() {
-    return load()
+    return load(currentPage.value, { append: false })
   }
 
   onMounted(load)
 
   return {
-    shows: computed(() => Array.from(showsSortedByGenre.value.values()).flat()),
+    shows,
     showsSortedByGenre,
     currentPage,
+    hasMorePages,
+    isAccumulated,
     nextPage,
+    appendNextPage,
     previousPage,
+    goToFirstPage,
+    loadPage: load,
     isLoading,
     error,
     refresh,

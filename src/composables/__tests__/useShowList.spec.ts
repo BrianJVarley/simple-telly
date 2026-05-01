@@ -4,7 +4,8 @@ import { mount } from '@vue/test-utils'
 import { defineComponent, nextTick } from 'vue'
 import { useShowList } from '../useShowList'
 import * as api from '@/api/tvmaze-api'
-import type { Show, Episode } from '@/types/tvShowModel'
+import { ApiErrorTypes } from '@/types/apiErrorModel'
+import type { Show } from '@/types/tvShowModel'
 
 vi.mock('@/api/tvmaze-api')
 
@@ -22,21 +23,6 @@ function makeShow(id: number, genre: string, rating: number | null = 8.0): Show 
     image: null,
     premiered: null,
     officialSite: null,
-  }
-}
-
-function makeEpisode(show: Show): Episode {
-  return {
-    id: show.id * 100,
-    name: `Ep`,
-    season: 1,
-    number: 1,
-    airdate: '2024-01-01',
-    airtime: '21:00',
-    runtime: 60,
-    summary: null,
-    image: null,
-    show,
   }
 }
 
@@ -61,9 +47,9 @@ describe('useShowList', () => {
 
   it('fetches schedule on mount and populates shows', async () => {
     const shows = [makeShow(1, 'Drama', 9.0), makeShow(2, 'Comedy', 7.0)]
-    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows.map(makeEpisode))
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
 
-    const { shows: showsRef, isLoading } = useComposable(() => useShowList({ type: 'schedule' }))
+    const { shows: showsRef, isLoading } = useComposable(() => useShowList({ page: 0 }))
 
     expect(isLoading.value).toBe(true)
     await nextTick()
@@ -72,22 +58,31 @@ describe('useShowList', () => {
     expect(isLoading.value).toBe(false)
   })
 
-  it('sorts shows by rating descending', async () => {
+  it('preserves API order in shows for mobile rendering', async () => {
     const shows = [makeShow(1, 'Drama', 6.0), makeShow(2, 'Drama', 9.0), makeShow(3, 'Drama', 7.5)]
-    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows.map(makeEpisode))
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
 
-    const { shows: showsRef } = useComposable(() => useShowList({ type: 'schedule' }))
+    const { shows: showsRef } = useComposable(() => useShowList({ page: 0 }))
     await nextTick()
     await nextTick()
-    const ratings = showsRef.value.map((s) => s.rating.average)
-    expect(ratings).toEqual([9.0, 7.5, 6.0])
+    expect(showsRef.value.map((show) => show.id)).toEqual([1, 2, 3])
+  })
+
+  it('sorts shows by rating descending within genre groups', async () => {
+    const shows = [makeShow(1, 'Drama', 6.0), makeShow(2, 'Drama', 9.0), makeShow(3, 'Drama', 7.5)]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { showsSortedByGenre } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+    expect(showsSortedByGenre.value.get('Drama')?.map((show) => show.id)).toEqual([2, 3, 1])
   })
 
   it('groups shows by first genre in showsSortedByGenre', async () => {
     const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy'), makeShow(3, 'Drama')]
-    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows.map(makeEpisode))
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
 
-    const { showsSortedByGenre } = useComposable(() => useShowList({ type: 'schedule' }))
+    const { showsSortedByGenre } = useComposable(() => useShowList({ page: 0 }))
     await nextTick()
     await nextTick()
     expect(showsSortedByGenre.value.get('Drama')).toHaveLength(2)
@@ -97,42 +92,69 @@ describe('useShowList', () => {
   it('falls back to "Other" for shows with no genres', async () => {
     const show = makeShow(1, '')
     show.genres = []
-    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue([makeEpisode(show)])
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue([show])
 
-    const { showsSortedByGenre } = useComposable(() => useShowList({ type: 'schedule' }))
+    const { showsSortedByGenre } = useComposable(() => useShowList({ page: 0 }))
     await nextTick()
     await nextTick()
     expect(showsSortedByGenre.value.has('Other')).toBe(true)
   })
 
-  it('filters out episodes with null show', async () => {
-    const episode: Episode = {
-      id: 999,
-      name: 'Ep',
-      season: 1,
-      number: 1,
-      airdate: '2024-01-01',
-      airtime: '21:00',
-      runtime: 60,
-      summary: null,
-      image: null,
-      show: undefined,
-    }
-    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue([episode])
+  it('appends the next page without reordering the existing mobile list', async () => {
+    vi.mocked(api.tvmazeApi.getShows)
+      .mockResolvedValueOnce([makeShow(1, 'Drama', 9.0), makeShow(2, 'Comedy', 7.0)])
+      .mockResolvedValueOnce([makeShow(3, 'Drama', 8.5), makeShow(4, 'Comedy', 6.5)])
 
-    const { shows: showsRef } = useComposable(() => useShowList({ type: 'schedule' }))
+    const {
+      shows: showsRef,
+      appendNextPage,
+      currentPage,
+      isAccumulated,
+    } = useComposable(() => useShowList({ page: 0 }))
+
     await nextTick()
     await nextTick()
-    expect(showsRef.value).toHaveLength(0)
+    await appendNextPage()
+    await nextTick()
+
+    expect(showsRef.value.map((show) => show.id)).toEqual([1, 2, 3, 4])
+    expect(currentPage.value).toBe(1)
+    expect(isAccumulated.value).toBe(true)
   })
 
   it('sets error on fetch failure', async () => {
     vi.mocked(api.tvmazeApi.getShows).mockRejectedValue(new Error('API down'))
 
-    const { error, isLoading } = useComposable(() => useShowList({ type: 'schedule' }))
+    const { error, isLoading } = useComposable(() => useShowList({ page: 0 }))
     await nextTick()
     await nextTick()
-    expect(error.value).toBe('API down')
+    expect(error.value).toEqual({ message: 'API down', cause: undefined })
+    expect(isLoading.value).toBe(false)
+  })
+
+  it('marks the end of the list without surfacing an error when append reaches 404', async () => {
+    const notFoundError = new Error('Page not found: 404 Not Found')
+    Object.defineProperty(notFoundError, 'cause', {
+      value: ApiErrorTypes['Not Found'],
+      configurable: true,
+    })
+
+    vi.mocked(api.tvmazeApi.getShows)
+      .mockResolvedValueOnce([makeShow(1, 'Drama', 9.0)])
+      .mockRejectedValueOnce(notFoundError)
+
+    const { appendNextPage, error, hasMorePages, currentPage, isLoading } = useComposable(() =>
+      useShowList({ page: 0 }),
+    )
+
+    await nextTick()
+    await nextTick()
+    await appendNextPage()
+    await nextTick()
+
+    expect(error.value).toBe(null)
+    expect(hasMorePages.value).toBe(false)
+    expect(currentPage.value).toBe(0)
     expect(isLoading.value).toBe(false)
   })
 })

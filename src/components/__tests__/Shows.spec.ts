@@ -9,11 +9,13 @@ import type { Show, SearchResult } from '@/types/tvShowModel'
 const mockSearch = vi.hoisted(() => vi.fn())
 const mockClear = vi.hoisted(() => vi.fn())
 const mockRouterPush = vi.hoisted(() => vi.fn())
+const mockRouterReplace = vi.hoisted(() => vi.fn())
 const useShowSearchMock = vi.hoisted(() => vi.fn())
 const useShowListMock = vi.hoisted(() => vi.fn())
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: mockRouterPush }),
+  useRouter: () => ({ push: mockRouterPush, replace: mockRouterReplace }),
+  useRoute: () => ({ query: {} }),
 }))
 
 vi.mock('@/composables/useShowSearch', () => ({
@@ -26,6 +28,8 @@ vi.mock('@/composables/useShowList', () => ({
 
 vi.mock('@heroicons/vue/24/outline', () => ({
   MagnifyingGlassCircleIcon: { template: '<span class="icon-stub"></span>' },
+  ExclamationTriangleIcon: { template: '<span class="error-icon-stub"></span>' },
+  ArrowPathIcon: { template: '<span class="retry-icon-stub"></span>' },
 }))
 
 vi.mock('@vueuse/core', async (importOriginal) => {
@@ -88,6 +92,9 @@ describe('ShowsHome', () => {
     useShowListMock.mockReturnValue({
       shows: computed(() => []),
       showsSortedByGenre: ref(new Map()),
+      currentPage: ref(1),
+      nextPage: vi.fn(),
+      previousPage: vi.fn(),
       isLoading: ref(false),
       error: ref(null),
       refresh: vi.fn(),
@@ -156,6 +163,9 @@ describe('ShowsHome', () => {
           ['Action', [show]],
         ]),
       ),
+      currentPage: ref(1),
+      nextPage: vi.fn(),
+      previousPage: vi.fn(),
       isLoading: ref(false),
       error: ref(null),
       refresh: vi.fn(),
@@ -168,6 +178,9 @@ describe('ShowsHome', () => {
     useShowListMock.mockReturnValue({
       shows: computed(() => []),
       showsSortedByGenre: ref(new Map()),
+      currentPage: ref(1),
+      nextPage: vi.fn(),
+      previousPage: vi.fn(),
       isLoading: ref(true),
       error: ref(null),
       refresh: vi.fn(),
@@ -176,12 +189,37 @@ describe('ShowsHome', () => {
     expect(wrapper.text()).toContain('Loading shows...')
   })
 
+  it('keeps rendered rows visible while loading another page', () => {
+    const show = makeShow()
+    useShowListMock.mockReturnValue({
+      shows: computed(() => [show]),
+      showsSortedByGenre: ref(new Map([['Drama', [show]]])),
+      currentPage: ref(2),
+      nextPage: vi.fn(),
+      previousPage: vi.fn(),
+      isLoading: ref(true),
+      error: ref(null),
+      refresh: vi.fn(),
+    })
+    const wrapper = mkWrapper()
+    expect(wrapper.text()).toContain('Loading shows...')
+    expect(wrapper.findAll('.genre-row-stub')).toHaveLength(1)
+  })
+
   it('shows error state for show list', () => {
     useShowListMock.mockReturnValue({
       shows: computed(() => []),
       showsSortedByGenre: ref(new Map()),
+      currentPage: ref(1),
+      hasMorePages: ref(true),
+      isAccumulated: ref(false),
+      nextPage: vi.fn(),
+      appendNextPage: vi.fn(),
+      previousPage: vi.fn(),
+      goToFirstPage: vi.fn(),
+      loadPage: vi.fn(),
       isLoading: ref(false),
-      error: ref('Network error'),
+      error: ref({ message: 'Network error' }),
       refresh: vi.fn(),
     })
     const wrapper = mkWrapper()
@@ -201,6 +239,25 @@ describe('ShowsHome', () => {
     await wrapper.find('.icon-stub').trigger('click')
     await wrapper.find('input[type="search"]').setValue('Searched')
     expect(wrapper.text()).toContain('Searched Show')
+  })
+
+  it('announces the search result count in a live region', async () => {
+    const show = makeShow({ id: 42, name: 'Searched Show' })
+    useShowSearchMock.mockReturnValue({
+      results: ref([{ score: 0.9, show }] as SearchResult[]),
+      isLoading: ref(false),
+      error: ref(null),
+      search: mockSearch,
+      clear: mockClear,
+    })
+    const wrapper = mkWrapper()
+
+    await wrapper.find('.icon-stub').trigger('click')
+    await wrapper.find('input[type="search"]').setValue('Searched')
+
+    const status = wrapper.find('[role="status"]')
+    expect(status.exists()).toBe(true)
+    expect(status.text()).toContain('1 show found for search Searched.')
   })
 
   it('shows "no results" message when query is set but results are empty', async () => {

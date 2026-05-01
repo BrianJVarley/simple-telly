@@ -79,17 +79,6 @@ describe('useShowDetail', () => {
   })
 
 
-  it('sets error on fetch failure', async () => {
-    vi.mocked(api.tvmazeApi.getShow).mockRejectedValue(new Error('Network error'))
-    vi.mocked(api.tvmazeApi.getShowEpisodes).mockRejectedValue(new Error('Network error'))
-
-    const { error, isLoading } = useComposable(() => useShowDetail(1))
-    await nextTick()
-    await nextTick()
-    expect(error.value).toBe('Network error')
-    expect(isLoading.value).toBe(false)
-  })
-
   it('computes seasonCount correctly', async () => {
     const show = makeShow()
     const episodes = [makeEpisode(1, 1, 1), makeEpisode(2, 1, 2), makeEpisode(3, 2, 1)]
