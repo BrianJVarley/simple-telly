@@ -15,7 +15,7 @@ function mkWrapper(handler: () => void) {
 }
 
 describe('useEscapeKey', () => {
-  let handler: ReturnType<typeof vi.fn>
+  let handler: () => void
 
   beforeEach(() => {
     handler = vi.fn()

@@ -53,6 +53,7 @@ const emit = defineEmits<{
         />
       </div>
       <Pagination
+        v-if="!hasSearchResults"
         :currentPage="currentPage"
         :disableNext="!shows.length"
         @previousPage="emit('previousPage')"

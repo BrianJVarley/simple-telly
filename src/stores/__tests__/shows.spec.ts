@@ -11,6 +11,7 @@ function makeShow(id: number, overrides: Partial<Show> = {}): Show {
     language: 'English',
     genres: ['Drama'],
     status: 'Running',
+    schedule: { time: '21:00', days: ['Monday'] },
     rating: { average: 8.0 },
     network: { id: 1, name: 'HBO' },
     summary: null,

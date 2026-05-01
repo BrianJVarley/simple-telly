@@ -26,6 +26,7 @@ const makeShow = (overrides: Partial<Show> = {}): Show => ({
   language: 'English',
   genres: ['Drama'],
   status: 'Running',
+  schedule: { time: '21:00', days: ['Monday'] },
   rating: { average: 8.0 },
   network: null,
   summary: null,
@@ -124,6 +125,17 @@ describe('ShowsGenreRow', () => {
     const wrapper = mkWrapper('Drama', [makeShow({ id: 99 })])
     await wrapper.find('[role="listitem"]').trigger('keydown', { key: 'Enter' })
     expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 99 } })
+  })
+
+  it('navigates to show details on Space key', async () => {
+    const wrapper = mkWrapper('Drama', [makeShow({ id: 77 })])
+    await wrapper.find('[role="listitem"]').trigger('keydown', { key: ' ' })
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 77 } })
+  })
+
+  it('adds data-show-id for focus restoration', () => {
+    const wrapper = mkWrapper('Drama', [makeShow({ id: 123 })])
+    expect(wrapper.find('[role="listitem"]').attributes('data-show-id')).toBe('123')
   })
 
   it('left scroll button is disabled when canScrollLeft is false', () => {

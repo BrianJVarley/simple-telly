@@ -92,7 +92,7 @@ watch(theme, (mode) => {
         color: 'var(--color-text-muted)',
       }"
     >
-      &copy; {{ new Date().getFullYear() }} Simple Telly &mdash; Show data provided by
+      &copy; {{ new Date().getFullYear() }} Simple Telly (developed by, Brian Varley) &mdash; Show data provided by
       <a
         href="https://www.tvmaze.com"
         target="_blank"

@@ -15,6 +15,7 @@ function makeShow(id = 1): Show {
     type: 'Scripted',
     language: 'English',
     genres: ['Drama'],
+    schedule: { time: '21:00', days: ['Monday'] },
     status: 'Running',
     rating: { average: 8.5 },
     network: null,

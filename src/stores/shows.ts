@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Show } from '@/api/tvmaze-api'
+import type { Show } from '@/types/tvShowModel'
 
 export const useShowsStore = defineStore('shows', () => {
   const cache = ref<Map<number, Show>>(new Map())

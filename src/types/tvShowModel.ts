@@ -3,6 +3,7 @@ export interface Show {
   name: string
   type: string
   language: string
+  schedule: { time: string; days: string[] }
   genres: string[]
   status: string
   rating: { average: number | null }

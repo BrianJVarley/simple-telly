@@ -42,7 +42,16 @@ export function useShowList(options?: UseShowListOptions) {
   })
 
   const rankedShows = computed(() => {
-    return [...shows.value].sort((a, b) => (b.rating.average ?? 0) - (a.rating.average ?? 0))
+    return [...shows.value].sort((a, b) => {
+      const aRating = a.rating.average
+      const bRating = b.rating.average
+
+      if (aRating === null && bRating === null) return 0
+      if (aRating === null) return 1
+      if (bRating === null) return -1
+
+      return bRating - aRating
+    })
   })
 
   const showsSortedByGenre = computed(() => {

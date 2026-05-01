@@ -15,6 +15,7 @@ function makeShow(id: number, genre: string, rating: number | null = 8.0): Show 
     name: `Show ${id}`,
     type: 'Scripted',
     language: 'English',
+    schedule: { time: '21:00', days: ['Monday'] },
     genres: [genre],
     status: 'Running',
     rating: { average: rating },
@@ -76,6 +77,21 @@ describe('useShowList', () => {
     await nextTick()
     await nextTick()
     expect(showsSortedByGenre.value.get('Drama')?.map((show) => show.id)).toEqual([2, 3, 1])
+  })
+
+  it('sorts null ratings to the bottom within genre groups', async () => {
+    const shows = [
+      makeShow(1, 'Drama', null),
+      makeShow(2, 'Drama', 8.5),
+      makeShow(3, 'Drama', 5.0),
+      makeShow(4, 'Drama', null),
+    ]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { showsSortedByGenre } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+    expect(showsSortedByGenre.value.get('Drama')?.map((show) => show.id)).toEqual([2, 3, 1, 4])
   })
 
   it('groups shows by first genre in showsSortedByGenre', async () => {

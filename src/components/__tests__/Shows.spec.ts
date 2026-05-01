@@ -54,6 +54,7 @@ const makeShow = (overrides: Partial<Show> = {}): Show => ({
   name: 'Test Show',
   type: 'Scripted',
   language: 'English',
+  schedule: { time: '21:00', days: ['Monday'] },
   genres: ['Drama'],
   status: 'Running',
   rating: { average: 8.0 },
@@ -308,7 +309,11 @@ describe('ShowsHome', () => {
     await wrapper.find('.icon-stub').trigger('click')
     await wrapper.find('input[type="search"]').setValue('test')
     await wrapper.find('[role="listitem"]').trigger('click')
-    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 42 } })
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      name: 'show-details',
+      params: { id: 42 },
+      query: {},
+    })
   })
 
   it('navigates to show details via Enter key on a search result', async () => {
@@ -324,6 +329,10 @@ describe('ShowsHome', () => {
     await wrapper.find('.icon-stub').trigger('click')
     await wrapper.find('input[type="search"]').setValue('test')
     await wrapper.find('[role="listitem"]').trigger('keydown', { key: 'Enter' })
-    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 7 } })
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      name: 'show-details',
+      params: { id: 7 },
+      query: {},
+    })
   })
 })

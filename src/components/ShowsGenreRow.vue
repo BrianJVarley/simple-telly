@@ -2,17 +2,20 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHorizontalScroll } from '@/composables/useHorizontalScroll'
+import { useShowNavigation } from '@/composables/useShowNavigation'
 import type { Show } from '@/types/tvShowModel'
 
 defineProps<{ genre: string; shows: Show[] }>()
 
 const router = useRouter()
+const { captureBeforeNavigate } = useShowNavigation()
 const hScrollContainer = ref<HTMLElement | null>(null)
 const { canScrollLeft, canScrollRight, scrollLeft, scrollRight } =
   useHorizontalScroll(hScrollContainer)
 
 function navigateToShowDetails(showId: number) {
-  router.push({ name: 'show-details', params: { id: showId } })
+  captureBeforeNavigate(showId)
+  router.push({ name: 'show-details', params: { id: showId }, query: {} })
 }
 </script>
 
@@ -24,7 +27,7 @@ function navigateToShowDetails(showId: number) {
     >
       {{ genre }}
     </h2>
-    <tr aria-labelledby="genreHeader" class="flex items-center gap-1">
+    <div aria-labelledby="genreHeader" class="flex items-center gap-1">
       <button
         @click="scrollLeft"
         :disabled="!canScrollLeft"
@@ -45,12 +48,14 @@ function navigateToShowDetails(showId: number) {
           v-for="show in shows"
           :key="show.id"
           v-memo="[show.id, show.name, show.rating.average, show.image?.medium]"
+          :data-show-id="show.id"
           role="listitem"
           :aria-label="show.name"
           tabindex="0"
           @click="navigateToShowDetails(show.id)"
-          @keydown.enter="navigateToShowDetails(show.id)"
-          class="flex-shrink-0 w-24 cursor-pointer hover:scale-105 transition-transform"
+          @keydown.enter.prevent="navigateToShowDetails(show.id)"
+          @keydown.space.prevent="navigateToShowDetails(show.id)"
+          class="flex-shrink-0 w-24 mt-1 mb-1 cursor-pointer hover:scale-105 transition-transform"
         >
           <img
             :src="show.image?.medium"
@@ -81,7 +86,7 @@ function navigateToShowDetails(showId: number) {
       >
         ›
       </button>
-    </tr>
+    </div>
   </div>
 </template>
 

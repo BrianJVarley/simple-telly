@@ -4,13 +4,29 @@ import { useShowDetail } from '@/composables/useShowDetail'
 import { useEscapeKey } from '@/composables/useKeyboardNavHelpers'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 import ApiError from '@/components/ApiError.vue'
+import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
+import { nextTick, onMounted, ref, watch } from 'vue'
 
 const router = useRouter()
 const props = defineProps<{ id: number }>()
-
 useEscapeKey(() => router.back())
 
+const headingRef = ref<HTMLElement | null>(null)
+
+onMounted(() => {
+  nextTick(() => headingRef.value?.focus())
+})
+
 const { show, seasonCount, isLoading, error, fetchShow } = useShowDetail(props.id)
+const { setDocumentTitle } = useDocumentTitleHelper()
+
+watch(
+  () => show.value?.name,
+  (name) => {
+    setDocumentTitle(name ?? 'Show Details')
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -20,7 +36,7 @@ const { show, seasonCount, isLoading, error, fetchShow } = useShowDetail(props.i
   >
     <button @click="router.back()" type="button" aria-label="Go back" class="w-6 h-6 mb-4">
       <ArrowLeftIcon
-        class="detail-icon-muted mb-2 w-6 h-6 self-start mb-4 transition-colors"
+        class="detail-icon-muted w-6 h-6 self-start transition-colors"
         aria-label="Close"
         v-tooltip="{ text: 'Back to Shows', placement: 'right' }"
       />
@@ -41,28 +57,54 @@ const { show, seasonCount, isLoading, error, fetchShow } = useShowDetail(props.i
           v-if="show.image"
           :src="show.image.medium"
           :alt="show.name"
-          mode
           class="w-full sm:w-48 rounded-lg object-cover"
         />
         <div class="flex-1">
-          <h1 class="text-3xl font-bold mb-2">{{ show.name }}</h1>
-          <div class="flex gap-2 flex-wrap mb-3" role="list" aria-label="Genres">
+          <h1
+            ref="headingRef"
+            data-testid="showDetailsHeader"
+            tabindex="-1"
+            class="text-3xl font-bold mb-2"
+          >
+            {{ show.name }}
+          </h1>
+
+          <div class="flex gap-2 flex-wrap mb-4" role="list" aria-label="Genres">
             <span
               v-for="genre in show.genres"
               :key="genre"
               role="listitem"
               class="detail-genre-chip text-xs px-2 py-1 rounded"
-              >{{ genre }}</span
             >
+              {{ genre }}
+            </span>
           </div>
-          <p class="detail-text-soft text-sm mb-2">
-            {{ show.status }} &bull; {{ show.language }}
-            <span v-if="show.rating.average"> &bull; &#9733; {{ show.rating.average }}</span>
-          </p>
-          <p v-if="show.network" class="detail-text-muted text-sm mb-3">{{ show.network.name }}</p>
-          <p v-if="seasonCount > 0" class="detail-text-muted text-sm mb-3">
-            {{ seasonCount }} season{{ seasonCount > 1 ? 's' : '' }}
-          </p>
+
+          <div class="space-y-2 mb-4">
+            <p class="detail-text-soft text-sm"><strong>Airing:</strong> {{ show.status }}</p>
+            <p class="detail-text-soft text-sm"><strong>Language:</strong> {{ show.language }}</p>
+            <p class="detail-text-soft text-sm">
+              <strong>Rating:</strong> {{ show.rating.average ?? 'N/A' }}
+            </p>
+            <p class="detail-text-soft text-sm">
+              <strong>Premiered:</strong> {{ show.premiered ?? 'N/A' }}
+            </p>
+            <p v-if="seasonCount > 0" class="detail-text-muted text-sm">
+              {{ seasonCount }}<strong> season{{ seasonCount > 1 ? 's' : '' }}</strong>
+            </p>
+            <p class="detail-text-soft text-sm">
+              <strong>Network:</strong> {{ show.network?.name ?? 'N/A' }}
+            </p>
+            <p class="detail-text-soft text-sm">
+              <strong>Schedule:</strong>
+              {{
+                show.schedule && (show.schedule.days.length || show.schedule.time)
+                  ? `${show.schedule.days.join(', ') || 'N/A'}${show.schedule.time ? ` at ${show.schedule.time}` : ''}`
+                  : 'N/A'
+              }}
+            </p>
+          </div>
+
           <div
             v-if="show.summary"
             class="detail-text-soft text-sm leading-relaxed"

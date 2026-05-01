@@ -27,6 +27,7 @@ const mountedWrappers: { unmount: () => void }[] = []
 const makeShow = (overrides: Partial<Show> = {}): Show => ({
   id: 1,
   name: 'Breaking Bad',
+  schedule: { time: '21:00', days: ['Sunday'] },
   type: 'Scripted',
   language: 'English',
   genres: ['Drama', 'Crime'],
@@ -157,21 +158,20 @@ describe('ShowDetails', () => {
     expect(wrapper.text()).not.toContain('AMC')
   })
 
-  it('renders season count with plural "seasons"', () => {
+  it('renders season count label with plural value', () => {
     useShowDetailMock.mockReturnValue(
       defaultDetailReturn({ show: ref(makeShow()), seasonCount: ref(5) }),
     )
     const wrapper = mkWrapper()
-    expect(wrapper.text()).toContain('5 seasons')
+    expect(wrapper.text()).toContain('Seasons: 5')
   })
 
-  it('renders singular "season" for exactly 1 season', () => {
+  it('renders season count label for exactly 1 season', () => {
     useShowDetailMock.mockReturnValue(
       defaultDetailReturn({ show: ref(makeShow()), seasonCount: ref(1) }),
     )
     const wrapper = mkWrapper()
-    expect(wrapper.text()).toContain('1 season')
-    expect(wrapper.text()).not.toContain('1 seasons')
+    expect(wrapper.text()).toContain('Seasons: 1')
   })
 
   it('does not render season count section when seasonCount is 0', () => {

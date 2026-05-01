@@ -18,7 +18,7 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/show/:id',
+      path: '/shows/:id',
       name: 'show-details',
       component: () => import('../views/ShowDetails.vue'),
       props: true,

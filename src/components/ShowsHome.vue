@@ -1,28 +1,32 @@
 <script setup lang="ts">
 import { useShowList } from '@/composables/useShowList'
 import { useShowSearch } from '@/composables/useShowSearch'
-import { ref, watch } from 'vue'
+import { ref, watch, onActivated, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
+import { useShowNavigation } from '@/composables/useShowNavigation'
 import SearchBar from '@/components/SearchBar.vue'
 import ShowsDesktopGrid from './ShowsDesktopGrid.vue'
 import ShowsSearchResults from './ShowsSearchResults.vue'
 import ShowsMobileList from './ShowsMobileList.vue'
+import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
 
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobileBp = breakpoints.smaller('md')
 const router = useRouter()
 const route = useRoute()
+const { captureBeforeNavigate, restoreAfterBackNavigation } = useShowNavigation()
+const { setDocumentTitle } = useDocumentTitleHelper()
 const { results, isLoading, error, search, clear } = useShowSearch()
-const initialPage = Number(route.query.page ?? 1)
+const initialPageQuery = Number(route.query.page ?? 1)
+const initialPage =
+  Number.isFinite(initialPageQuery) && initialPageQuery > 0 ? initialPageQuery - 1 : 0
 const {
   shows,
   showsSortedByGenre,
   currentPage,
-  hasMorePages,
   isAccumulated,
   nextPage,
-  appendNextPage,
   previousPage,
   isLoading: isLoadingShows,
   error: showsListError,
@@ -30,8 +34,11 @@ const {
   loadPage,
   refresh: refreshShows,
 } = useShowList({ page: initialPage })
-
 const query = ref('')
+
+function setShowsPageTitle() {
+  setDocumentTitle('Shows')
+}
 
 function onClear() {
   query.value = ''
@@ -39,12 +46,30 @@ function onClear() {
 }
 
 function navigateToShowDetails(showId: number) {
-  router.push({ name: 'show-details', params: { id: showId } })
+  captureBeforeNavigate(showId, { saveScroll: !isMobileBp.value })
+  router.push({ name: 'show-details', params: { id: showId }, query: {} })
 }
+
+onMounted(() => {
+  setShowsPageTitle()
+})
+
+onActivated(async () => {
+  setShowsPageTitle()
+  await nextTick()
+  restoreAfterBackNavigation()
+})
 
 watch(query, (q) => search(q))
 watch(currentPage, (page) => {
-  router.replace({ query: { page } })
+  if (route.name !== 'home' && route.name !== 'shows') {
+    return
+  }
+
+  router.replace({
+    name: route.name,
+    query: { page: String(page + 1) },
+  })
 })
 
 watch(isMobileBp, (isMobile) => {
@@ -56,7 +81,9 @@ watch(isMobileBp, (isMobile) => {
 watch(
   () => route.query.page,
   (page) => {
-    const pageNum = Number(page ?? 0)
+    const nextPageQuery = Number(page ?? 1)
+    const pageNum = Number.isFinite(nextPageQuery) && nextPageQuery > 0 ? nextPageQuery - 1 : 0
+
     if (pageNum !== currentPage.value) {
       loadPage(pageNum)
     }
@@ -72,7 +99,7 @@ watch(
     :shows
     :isLoading="isLoadingShows"
     :error="showsListError"
-    :currentPage
+    :currentPage="currentPage + 1"
     :hasSearchResults="results.length > 0"
     @refresh="refreshShows"
     @goToFirstPage="goToFirstPage"
@@ -88,9 +115,7 @@ watch(
       v-if="isMobileBp"
       :shows
       :isLoading="isLoadingShows"
-      :canLoadMore="hasMorePages"
       :error="showsListError"
-      @reachEnd="appendNextPage"
       @select="navigateToShowDetails"
       @refresh="refreshShows"
       @goToFirstPage="goToFirstPage"

@@ -44,11 +44,13 @@ const announcement = computed(() => {
       <div
         v-for="{ show } in results"
         :key="show.id"
+        :data-show-id="show.id"
         role="listitem"
         :aria-label="show.name"
         tabindex="0"
         @click="emit('select', show.id)"
-        @keydown.enter="emit('select', show.id)"
+        @keydown.enter.prevent="emit('select', show.id)"
+        @keydown.space.prevent="emit('select', show.id)"
         class="rounded-lg overflow-hidden bg-gray-800 hover:scale-105 transition-transform cursor-pointer"
       >
         <img :src="show.image?.medium" :alt="show.name" class="w-full object-cover aspect-[2/3]" />

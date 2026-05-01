@@ -1,13 +1,13 @@
 # Simple Telly
 
-A Vue 3 app for browsing TV shows, searching by title, and viewing show details.
+A Vue 3 app for browsing TV shows with search feature and show details page. Uses the tvmaze api to provide tv shows data 
 
-## Quick Start (Reviewer)
+## Quick Start
 
 ### 1. Requirements
 
 - Node.js `^20.19.0` or `>=22.12.0`
-- npm
+- npm >= `10`
 
 ### 2. Install
 
@@ -21,23 +21,16 @@ npm install
 npm run dev
 ```
 
-Open the URL printed by Vite (typically `http://localhost:5173`).
+Open the app URL output by CLI `http://localhost:5173`
 
-## What To Review In The App
+## Overview
 
 ### Main flows
 
 - Shows list view: `/` or `/shows?page=1`
-- Show details view: `/show/:id`
-- Search and clear interactions in the header area
-- Pagination and genre-row browsing
-
-### UX / design choices
-
-- Responsive layout with desktop and mobile show presentations
-- Theme system with light/dark mode toggle and persisted user preference
-- Semantic color tokens defined in [src/assets/base.css](src/assets/base.css)
-- Focus on readable contrast and accessible text/background pairings
+- Show details view: `/shows/:id`
+- Search and clear TV show queries 
+- Pagination and TV show genre browsing
 
 ## Project Design (High Level)
 
@@ -48,7 +41,16 @@ Open the URL printed by Vite (typically `http://localhost:5173`).
 - UI composition:
 - Views in [src/views](src/views)
 - Reusable components in [src/components](src/components)
-- Behavior extracted into composables in [src/composables](src/composables)
+- Business Logic & Behavior refactored into composables in [src/composables](src/composables)
+
+### UX / design choices
+
+- Responsive layout with desktop and mobile views
+- Theme system with light/dark mode toggle and persisted user preference
+- Semantic color tokens defined in [src/assets/base.css](src/assets/base.css)
+- Focus on readable contrast and accessible UI with correct keyboard navigation and focus order
+
+
 
 ## Test Commands
 
@@ -68,12 +70,7 @@ npx playwright install
 npm run test:e2e
 ```
 
-Notes:
-
-- Playwright runs Chromium and Firefox by default.
-- WebKit is currently disabled in [playwright.config.ts](playwright.config.ts) because of Apple Silicon WebKit instability.
-
-### Type check and build
+### Types check & build
 
 ```sh
 npm run type-check
@@ -86,8 +83,31 @@ npm run build
 npm run lint
 ```
 
-## Useful Files
+## Architecture Decisions
 
-- App shell and theme toggle: [src/App.vue](src/App.vue)
-- Theme tokens: [src/assets/base.css](src/assets/base.css)
-- E2E tests: [e2e/simple-telly.spec.ts](e2e/vue.spec.ts)
+### Why Vue 3
+Vue 3 was chosen for its strong single-file component model, straightforward reactivity system, and low setup overhead for a focused frontend assessment.
+
+### Why Pinia
+Pinia is used for lightweight shared state, mainly caching show data between list and detail views. It keeps global state minimal while avoiding prop drilling.
+
+### Why composables
+Business logic is kept in composables to keep components presentation-focused. This includes:
+- show list fetching and grouping
+- search behavior and debouncing
+- show detail fetching
+- horizontal scroll behavior
+- navigation restoration
+- document title updates
+
+### State approach
+The app uses local component state for view-specific concerns and shared composables or Pinia only where state must survive between components or routes.
+
+## Trade-offs
+
+- The app favors simple route-driven flows over a more abstract state machine.
+- Scroll restoration is implemented for desktop/back-navigation focus restoration, while mobile scroll restoration was intentionally skipped to reduce complexity.
+- TVMaze summary HTML is rendered directly with v-html because the content is trusted API content for this assessment.
+- E2E coverage is focused on core user journeys rather than exhaustive visual regression.
+
+

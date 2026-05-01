@@ -3,3 +3,4 @@ node_modules
 .vscode/*
 test-results/*
 playwright-report/*
+playwright-report/index.html

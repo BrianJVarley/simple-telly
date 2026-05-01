@@ -31,20 +31,25 @@ function onClear() {
 </script>
 <template>
   <div
-    class="search-shell flex flex-row items-center gap-2 px-2 py-3 pl-4"
+    class="search-shell flex flex-wrap items-center gap-3 px-4 py-3 pl-8"
     role="region"
     aria-label="Featured shows"
   >
-    <button type="button" @click="toggleSearch" aria-label="Toggle search">
+    <button
+      type="button"
+      @click="toggleSearch"
+      aria-label="Toggle search"
+      class="flex h-10 w-10 items-center justify-center rounded-full"
+    >
       <MagnifyingGlassCircleIcon
-        class="search-icon ml-4 w-6 h-6"
+        class="search-icon w-6 h-6"
         v-tooltip="{ text: 'Search for Shows', placement: 'right' }"
       />
     </button>
     <Transition name="fade">
       <div
         v-if="isSearchVisible"
-        class="search-panel min-h-[61px] border-t p-3 flex items-center gap-3"
+        class="search-panel flex min-h-[61px] min-w-0 flex-1 items-center gap-3 p-3"
         role="search"
       >
         <label for="show-search" class="sr-only">Search shows</label>
@@ -84,6 +89,10 @@ function onClear() {
 
 .search-shell {
   background-color: var(--color-background-soft);
+}
+
+.search-shell button {
+  flex-shrink: 0;
 }
 
 .search-icon,

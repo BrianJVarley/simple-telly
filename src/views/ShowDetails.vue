@@ -7,13 +7,3 @@ const props = defineProps<{ id: string }>()
 <template>
     <ShowDetails :id="Number(props.id)" />
 </template>
-
-<style>
-@media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
-}
-</style>
