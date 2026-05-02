@@ -58,7 +58,7 @@ function navigateToShowDetails(showId: number) {
           class="flex-shrink-0 w-24 mt-1 mb-1 cursor-pointer hover:scale-105 transition-transform"
         >
           <img
-            :src="show.image?.medium"
+            :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
             :alt="show.name"
             loading="lazy"
             class="w-full h-32 object-cover rounded-lg"

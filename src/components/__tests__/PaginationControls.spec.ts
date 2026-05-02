@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import PaginationControls from '../PaginationWidget.vue'
+import PaginationControls from '../ShowsHome/PaginationWidget.vue'
 
 describe('PaginationControls', () => {
   it('renders the current page', () => {

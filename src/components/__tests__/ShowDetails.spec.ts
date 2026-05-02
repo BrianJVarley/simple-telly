@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { ref } from 'vue'
-import ShowDetails from '../ShowDetails.vue'
+import ShowDetails from '../ShowDetails/ShowDetails.vue'
 import type { Show } from '@/types/tvShowModel'
 
 // ── hoisted mock fns ────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ describe('ShowDetails', () => {
       defaultDetailReturn({ show: ref(makeShow()), seasonCount: ref(5) }),
     )
     const wrapper = mkWrapper()
-    expect(wrapper.text()).toContain('Seasons: 5')
+    expect(wrapper.text()).toContain('5 seasons')
   })
 
   it('renders season count label for exactly 1 season', () => {
@@ -171,7 +171,7 @@ describe('ShowDetails', () => {
       defaultDetailReturn({ show: ref(makeShow()), seasonCount: ref(1) }),
     )
     const wrapper = mkWrapper()
-    expect(wrapper.text()).toContain('Seasons: 1')
+    expect(wrapper.text()).toContain('1 season')
   })
 
   it('does not render season count section when seasonCount is 0', () => {

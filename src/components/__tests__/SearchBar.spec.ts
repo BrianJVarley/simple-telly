@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { defineComponent, nextTick, ref } from 'vue'
-import SearchBar from '../SearchBar.vue'
+import SearchBar from '../ShowsHome/SearchBar.vue'
 
 vi.mock('@heroicons/vue/24/outline', () => ({
   MagnifyingGlassCircleIcon: { template: '<span class="icon-stub"></span>' },

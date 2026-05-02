@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { useShowDetail } from '@/composables/useShowDetail'
 import { useEscapeKey } from '@/composables/useKeyboardNavHelpers'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
-import ApiError from '@/components/ApiError.vue'
+import ApiError from '@/components/ErrorHandling/ApiError.vue'
 import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
 import { nextTick, onMounted, ref, watch } from 'vue'
 
@@ -50,12 +50,12 @@ watch(
       :message="error.message"
       :cause="error.cause"
       @retry="fetchShow(props.id)"
+      @back-to-home="router.push({ name: 'home' })"
     />
     <div v-else-if="show" class="max-w-4xl mx-auto w-full" role="main">
       <div class="flex flex-col sm:flex-row gap-6">
         <img
-          v-if="show.image"
-          :src="show.image.medium"
+          :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
           :alt="show.name"
           class="w-full sm:w-48 rounded-lg object-cover"
         />

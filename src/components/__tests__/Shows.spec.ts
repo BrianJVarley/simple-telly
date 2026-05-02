@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { ref, computed } from 'vue'
-import ShowsHome from '../ShowsHome.vue'
+import ShowsHome from '../ShowsHome/ShowsHome.vue'
 import type { Show, SearchResult } from '@/types/tvShowModel'
 
 // ── hoisted mock fns ──────────────────────────────────────────────────────────

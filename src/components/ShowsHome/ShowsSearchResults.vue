@@ -53,7 +53,11 @@ const announcement = computed(() => {
         @keydown.space.prevent="emit('select', show.id)"
         class="rounded-lg overflow-hidden bg-gray-800 hover:scale-105 transition-transform cursor-pointer"
       >
-        <img :src="show.image?.medium" :alt="show.name" class="w-full object-cover aspect-[2/3]" />
+        <img
+          :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
+          :alt="show.name"
+          class="w-full object-cover aspect-[2/3]"
+        />
         <p class="p-2 text-sm font-medium truncate">{{ show.name }}</p>
       </div>
     </div>

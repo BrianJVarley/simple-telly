@@ -31,8 +31,8 @@ describe('tvmazeApi', () => {
 
     it('encodes special characters in query', async () => {
       mockResponse([])
-      await tvmazeApi.searchShows('s&p 500')
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('s%26p%20500'))
+      await tvmazeApi.searchShows('G&A Beo')
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('G%26A%20Beo'))
     })
   })
 
@@ -65,8 +65,8 @@ describe('tvmazeApi', () => {
 
     it('uses provided page number', async () => {
       mockResponse([])
-      await tvmazeApi.getShows(1)
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'))
+      await tvmazeApi.getShows(5)
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=5'))
     })
   })
 

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import ShowsGenreRow from './ShowsGenreRow.vue'
-import ApiError from './ApiError.vue'
+import ApiError from '../ErrorHandling/ApiError.vue'
 import Pagination from './PaginationWidget.vue'
 import type { Show } from '@/types/tvShowModel'
-import type { ApiErrorTypes } from '@/types/apiErrorModel';
+import type { ApiErrorTypes } from '@/types/apiErrorModel'
 
 defineProps<{
   showsSortedByGenre: Map<string, Show[]>

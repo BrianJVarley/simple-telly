@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useVirtualList } from '@vueuse/core'
 import type { Show } from '@/types/tvShowModel'
 import { ApiErrorTypes } from '@/types/apiErrorModel'
-import ApiError from './ApiError.vue'
+import ApiError from '../ErrorHandling/ApiError.vue'
 const props = defineProps<{
   shows: Show[]
   isLoading: boolean
@@ -56,7 +56,7 @@ const { list, containerProps, wrapperProps } = useVirtualList(
           class="flex items-center gap-4 py-2 border-b border-gray-800 hover:bg-gray-800 rounded px-2 cursor-pointer"
         >
           <img
-            :src="show.image?.medium"
+            :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
             :alt="show.name"
             class="show-image w-12 h-16 object-cover rounded flex-shrink-0"
           />

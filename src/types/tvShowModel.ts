@@ -1,3 +1,6 @@
+/**
+ * TV Show data models based on the TVmaze API response.
+ */
 export interface Show {
   id: number
   name: string

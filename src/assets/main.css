@@ -1,6 +1,7 @@
 @import './base.css';
 @import 'tailwindcss';
 
+/* Overrides for app styling */
 html,
 body,
 #app {

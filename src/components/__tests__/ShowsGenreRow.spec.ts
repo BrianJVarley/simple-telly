@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import ShowsGenreRow from '../ShowsGenreRow.vue'
+import ShowsGenreRow from '../ShowsHome/ShowsGenreRow.vue'
 import type { Show } from '@/types/tvShowModel'
 
 // ── hoisted mock fns ─────────────────────────────────────────────────────────
@@ -118,19 +118,23 @@ describe('ShowsGenreRow', () => {
   it('navigates to show details on card click', async () => {
     const wrapper = mkWrapper('Drama', [makeShow({ id: 42 })])
     await wrapper.find('[role="listitem"]').trigger('click')
-    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 42 } })
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      name: 'show-details',
+      params: { id: 42 },
+      query: {},
+    })
   })
 
   it('navigates to show details on Enter key', async () => {
     const wrapper = mkWrapper('Drama', [makeShow({ id: 99 })])
     await wrapper.find('[role="listitem"]').trigger('keydown', { key: 'Enter' })
-    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 99 } })
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 99 }, query: {} })
   })
 
   it('navigates to show details on Space key', async () => {
     const wrapper = mkWrapper('Drama', [makeShow({ id: 77 })])
     await wrapper.find('[role="listitem"]').trigger('keydown', { key: ' ' })
-    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 77 } })
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'show-details', params: { id: 77 }, query: {} })
   })
 
   it('adds data-show-id for focus restoration', () => {
