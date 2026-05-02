@@ -1,0 +1,7 @@
+{
+  "ignorePatterns": [
+    "dist/**",
+    "apps/simple-telly/dist/**",
+    "coverage/**"
+  ]
+}

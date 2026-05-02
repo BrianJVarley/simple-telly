@@ -75,6 +75,10 @@ npm run build
 npm run lint
 ```
 
+### CI Workflows
+
+Pull requests trigger the [PR workflow](.github/workflows/pull-request-checks.yml). Which runs a number of sanity checks build, e2e, unit tests, linting.
+
 ## App Overview
 
 ## Project Structure

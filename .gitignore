@@ -10,3 +10,6 @@ dist/*
 dist/*.html
 dist/assets/*
 .DS_Store
+apps/simple-telly/dist/
+apps/simple-telly/dist/index.html
+.eslintcache
