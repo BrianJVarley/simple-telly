@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import type { Show } from '@/types/tvShowModel'
 import { StarIcon } from '@heroicons/vue/24/outline'
+import { computed } from 'vue'
 
-defineProps<{ show: Show | undefined }>()
+const { show } = defineProps<{ show: Show | undefined }>()
 
 const emit = defineEmits<{
   select: [showId: number]
 }>()
+
+const topPickSrc = computed(() => show?.image?.original ?? '/images/show-placeholder-404.svg')
 </script>
 
 <template>
@@ -31,9 +34,11 @@ const emit = defineEmits<{
       @click="emit('select', show.id)"
       @keydown.enter.prevent="emit('select', show.id)"
       @keydown.space.prevent="emit('select', show.id)"
-      :src="show.image?.original ?? '/images/show-placeholder-404.svg'"
+      :src="topPickSrc"
       :alt="show.name"
-      loading="lazy"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
       class="w-full aspect-[16/5] object-cover object-center rounded-lg mt-1 mb-2"
     />
   </div>

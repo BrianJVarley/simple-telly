@@ -39,10 +39,16 @@ function onClear() {
       type="button"
       @click="toggleSearch"
       aria-label="Toggle search"
-      class="flex h-10 w-10 items-center rounded-full"
+      class="flex items-center rounded-full"
     >
       <MagnifyingGlassCircleIcon
-        class="search-icon w-6 h-6"
+        data-testid="search-icon-desktop"
+        class="search-icon hidden h-8 w-8 sm:block"
+        v-tooltip="{ text: 'Search for Shows', placement: 'right' }"
+      />
+      <MagnifyingGlassCircleIcon
+        data-testid="search-icon-mobile"
+        class="search-icon h-12 w-12 sm:hidden"
         v-tooltip="{ text: 'Search for Shows', placement: 'right' }"
       />
     </button>

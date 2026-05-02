@@ -96,11 +96,13 @@ watch(
 
 <template>
   <SearchBar v-model:query="query" @clear="onClear" />
-  <ShowsTopPick
-    v-if="!isMobileBp && !query && showsTopPick"
-    :show="showsTopPick"
-    @select="navigateToShowDetails"
-  />
+  <Transition name="fade">
+    <ShowsTopPick
+      v-if="!isMobileBp && !query && showsTopPick"
+      :show="showsTopPick"
+      @select="navigateToShowDetails"
+    />
+  </Transition>
   <ShowsDesktopGrid
     v-if="!isMobileBp"
     :showsSortedByGenre
@@ -133,3 +135,18 @@ watch(
     />
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+</style>

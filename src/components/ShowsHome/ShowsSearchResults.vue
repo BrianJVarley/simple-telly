@@ -56,6 +56,9 @@ const announcement = computed(() => {
         <img
           :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
           :alt="show.name"
+          loading="lazy"
+          fetchpriority="low"
+          decoding="async"
           class="w-full object-cover aspect-[2/3]"
         />
         <p class="p-2 text-sm font-medium truncate">{{ show.name }}</p>

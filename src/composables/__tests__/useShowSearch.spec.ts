@@ -19,6 +19,7 @@ function makeResult(id: number): SearchResult {
       genres: [],
       status: 'Running',
       rating: { average: null },
+      schedule: { time: '', days: [] },
       network: null,
       summary: null,
       image: null,

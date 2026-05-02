@@ -12,10 +12,16 @@ A Vue 3 app for browsing TV shows with a search feature and show details page. U
 
 ## Quick Start
 
-### 1. Requirements
+### 1. Requirements & Environment
 
 - Node.js `^20.19.0` or `>=22.12.0`
 - npm >= `10`
+
+Create a `.env` file if you want to override app config defaults, for example:
+
+```ts
+VITE_TV_MAZE_API_BASE_URL=https://api.tvmaze.com
+```
 
 ### 2. Install
 
@@ -27,6 +33,12 @@ npm install
 
 ```sh
 npm run dev
+```
+
+> Or run the production build preview, this is useful for running Lighthouse scans against production build.
+
+```sh
+npm run serve:production
 ```
 
 Open the app URL output by CLI `http://localhost:5173/shows`
@@ -74,16 +86,31 @@ npm run lint
   - Reusable components in [src/components](src/components)
 - Business logic & special behavior bundled into `composables` in [src/composables](src/composables)
 
-### UX / design choices
+### UX choices
 
 - Responsive layout with desktop and mobile views using tailwind breakpoint classes
-- Focus on readable contrast and accessible UI. By using correct keyboard navigation (Escape, Tab spacebar keys) order and focus between navigations
-- Pagination retained between navigation from shows to show details views
-- Accessibility best practices adopted for voice over screen reader, using aria-* attributed where needed.
 - Theme system with light/dark mode toggle and persisted user preference
 - A basic error handling flow is added to go abck when shows page not found or try again for other error status.
 - Semantic color tokens defined in [src/assets/base.css](src/assets/base.css)
+
+### Design choices
+
+- Navigation:
+  - Pagination retained between navigation from shows to show details views.
+  - Focused on readable contrast and accessible UI. By using correct keyboard navigation (Escape, Tab spacebar keys) order and focus order between navigations.
+  
+- Optimizations:
+  - Image sources loaded using a mix of lazy loading and low vs eager fetch priority where needed. In addition computed was used to load some image sources. This improved First Contentful Paint metrics in Chrome Lighthouse performance scan (`0.3s`). See: [Lighthouse scan report](performance-reports-chrome/simple-telly_april_02_scan_4173.html)
+  - Search uses a debounce function to prevent spamming search requests.
+  - Shows are loaded by page rather than one large block of data. This reduces load time and rendering effort of scrollers.
+  - In mobile views, a tv shows are batched by page as user scrolls to the end of the list.
+
+- A11Y:
+- Accessibility best practices adopted for voice over screen reader, using aria-* attributed where needed.
+
+
 - `WCAG 2AA` targeted in E2E tests to ensure application is compliant.
+
 
 ## Architecture Decisions
 
@@ -108,7 +135,7 @@ The business logic is encapsulated into Vue composables to keep the components p
 
 ### State approach
 
-The app uses local component state for view-specific concerns (`ref`) and shared composables & Pinia only where state must survive between navigation events. For example page number is retained when exiting the show details view.
+The app uses local component state for view-specific state (`ref`) and shared composables & Pinia when state needs to persist between navigation events. For example the page number query is retained when exiting the show details view.
 
 ## Trade-offs
 
@@ -119,5 +146,6 @@ The app uses local component state for view-specific concerns (`ref`) and shared
 - Pagination is enabled at page level rather than paging from eachhorizontal scroller. It's a technical trade off since the TVMaze API doesn't expose an API to search by TV show gerne & pagination.
 - Show details is implemented as a seperate page to enable deep linking to specific shows by ID. Using a modal & deep linking would have required implementing custom routing code. It's straightforward to rely on browser history instead for navigation between shows.
 - TVMaze summary HTML is rendered directly with v-html because the content is trusted API content. But in a production application I would use a DOM sanitization package to sanitize v-html content.
+- **Performance**: There are some metrics that can be improved on in last [Lighthouse scan report](performance-reports-chrome/simple-telly_april_02_scan_4173.html). Such as Largest Contentful Paint & Cumulative Layout Shift.
 - Filters: If implemented further I could have added a filters toolbar. This filter would refine list based on a selected genre. Which would reduce needing to scroll down to a specific genre in page.
 - E2E coverage is focused on the core user flows rather than using visual regression tests or mutation tests.

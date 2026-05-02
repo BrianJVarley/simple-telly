@@ -2,13 +2,12 @@ import { computed, ref, watch } from 'vue'
 import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
 import type { Show, Episode } from '@/types/tvShowModel'
-import type { ApiErrorTypes } from '@/types/apiErrorModel'
-
+import { ApiErrorTypes } from '@/types/apiErrorModel'
 
 /**
  * Composable to manage fetching and state of TV show details and episodes with error handling.
- * @param showId 
- * @returns 
+ * @param showId
+ * @returns
  */
 export function useShowDetail(showId: number) {
   const showsStore = useShowsStore()
@@ -39,9 +38,17 @@ export function useShowDetail(showId: number) {
       showsStore.upsert(showData)
     } catch (err) {
       if (err instanceof Error) {
+        let cause: keyof typeof ApiErrorTypes | undefined
+
+        if ('cause' in err) {
+          const candidate = (err as Error & { cause?: unknown }).cause
+          cause =
+            typeof candidate === 'string' ? (candidate as keyof typeof ApiErrorTypes) : undefined
+        }
+
         error.value = {
           message: err.message,
-          cause: (err as Error).cause as keyof typeof ApiErrorTypes | undefined,
+          cause,
         }
       } else {
         error.value = { message: 'Failed to load show' }

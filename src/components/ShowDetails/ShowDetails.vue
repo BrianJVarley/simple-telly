@@ -57,6 +57,9 @@ watch(
         <img
           :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
           :alt="show.name"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
           class="w-1/2 mx-auto aspect-[2/3] sm:mx-0 sm:w-48 sm:aspect-auto rounded-lg object-cover"
         />
         <div class="flex-1">

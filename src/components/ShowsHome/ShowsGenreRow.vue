@@ -61,6 +61,8 @@ function navigateToShowDetails(showId: number) {
             :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
             :alt="show.name"
             loading="lazy"
+            fetchpriority="low"
+            decoding="async"
             class="w-full h-32 object-cover rounded-lg"
           />
           <div class="min-w-0 px-0.5 pb-1">

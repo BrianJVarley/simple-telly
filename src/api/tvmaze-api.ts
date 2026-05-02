@@ -3,6 +3,12 @@ import type { SearchResult, Show, Episode } from '@/types/tvShowModel'
 
 const BASE_URL = import.meta.env.VITE_TV_MAZE_API_BASE_URL ?? 'https://api.tvmaze.com'
 
+function createApiError(message: string, cause: keyof typeof ApiErrorTypes): Error {
+  const error = new Error(message) as Error & { cause?: keyof typeof ApiErrorTypes }
+  error.cause = cause
+  return error
+}
+
 async function apiFetch<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`)
   errorStatusHandler(response)
@@ -23,27 +29,18 @@ export const tvmazeApi = {
 }
 
 /**
- * Handle HTTP error statuses by throwing an error with a user-friendly message 
- * @param response 
+ * Handle HTTP error statuses by throwing an error with a user-friendly message
+ * @param response
  */
 function errorStatusHandler(response: Response) {
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error(`Page not found`, {
-        cause: ApiErrorTypes['Not Found'],
-      })
+      throw createApiError('Page not found', ApiErrorTypes['Not Found'])
     } else if (response.status >= 500) {
-      throw new Error(`Please try again later`, {
-        cause: ApiErrorTypes['Server Error'],
-      })
+      throw createApiError('Please try again later', ApiErrorTypes['Server Error'])
     } else if (response.status >= 400 && response.status < 500) {
-      throw new Error(`Refresh your browser window`, {
-        cause: ApiErrorTypes['Request Error'],
-      })
+      throw createApiError('Refresh your browser window', ApiErrorTypes['Request Error'])
     }
-    throw new Error(`An unexpected error occurred`, {
-      cause: ApiErrorTypes['Unknown Error'],
-    })
+    throw createApiError('An unexpected error occurred', ApiErrorTypes['Unknown Error'])
   }
 }
-

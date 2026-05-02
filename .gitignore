@@ -6,3 +6,7 @@ playwright-report/*
 playwright-report/index.html
 .env.*
 .env
+dist/*
+dist/*.html
+dist/assets/*
+.DS_Store

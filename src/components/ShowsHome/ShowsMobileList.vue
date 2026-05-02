@@ -94,6 +94,9 @@ function onScroll(event: Event) {
             <img
               :src="row.show?.image?.medium ?? '/images/show-placeholder-404.svg'"
               :alt="row.show.name"
+              loading="lazy"
+              fetchpriority="low"
+              decoding="async"
               class="show-image w-12 h-16 object-cover rounded flex-shrink-0"
             />
             <div class="min-w-0">
