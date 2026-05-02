@@ -19,12 +19,19 @@ const emit = defineEmits<{
   goToFirstPage: []
   nextPage: []
   previousPage: []
+  skipBackward: [value: number]
+  skipForward: [value: number]
 }>()
 </script>
 
 <template>
   <div role="region" aria-label="Featured shows by genre">
-    <div v-if="isLoading && !shows.length" class="text-gray-400 text-sm px-4 py-3" aria-busy="true">
+    <div
+      v-if="isLoading && !shows.length"
+      class="text-sm px-4 py-3"
+      :style="{ color: 'var(--color-text-muted)' }"
+      aria-busy="true"
+    >
       Loading shows...
     </div>
     <ApiError
@@ -38,7 +45,8 @@ const emit = defineEmits<{
       <div v-if="!hasSearchResults" class="relative" :aria-busy="isLoading">
         <div
           v-if="isLoading"
-          class="px-4 py-2 text-xs text-gray-400"
+          class="px-4 py-2 text-xs"
+          :style="{ color: 'var(--color-text-muted)' }"
           role="status"
           aria-live="polite"
           aria-atomic="true"
@@ -57,6 +65,8 @@ const emit = defineEmits<{
         :currentPage="currentPage"
         :disableNext="!shows.length"
         @previousPage="emit('previousPage')"
+        @skip-backward="(value) => emit('skipBackward', value)"
+        @skip-forward="(value) => emit('skipForward', value)"
         @nextPage="emit('nextPage')"
       />
       <ApiError

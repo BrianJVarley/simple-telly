@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:e2e": "playwright test",
+    "test:shows:e2e": "playwright test e2e/simple-telly.spec.ts -g @showsHome",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",

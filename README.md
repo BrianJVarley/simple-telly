@@ -4,6 +4,7 @@ A Vue 3 app for browsing TV shows with a search feature and show details page. U
 
 ### Main User Flows
 
+- Displays a banner show for top pick of the day
 - Shows list view: `/` or `/shows?page=1`
 - Show details view: `/shows/:id`
 - Search and clear TV show queries
@@ -75,13 +76,14 @@ npm run lint
 
 ### UX / design choices
 
-- Responsive layout with desktop and mobile views
+- Responsive layout with desktop and mobile views using tailwind breakpoint classes
 - Focus on readable contrast and accessible UI. By using correct keyboard navigation (Escape, Tab spacebar keys) order and focus between navigations
 - Pagination retained between navigation from shows to show details views
 - Accessibility best practices adopted for voice over screen reader, using aria-* attributed where needed.
 - Theme system with light/dark mode toggle and persisted user preference
 - A basic error handling flow is added to go abck when shows page not found or try again for other error status.
 - Semantic color tokens defined in [src/assets/base.css](src/assets/base.css)
+- `WCAG 2AA` targeted in E2E tests to ensure application is compliant.
 
 ## Architecture Decisions
 
@@ -110,10 +112,12 @@ The app uses local component state for view-specific concerns (`ref`) and shared
 
 ## Trade-offs
 
-> Some trade offs in the implementation I can think of.
+> Some trade offs in the implementation I can think of:
 
-- Scroll position & focus is implemented for desktop back-navigation, but for mobile scroll was intentionally skipped to reduce complexity.
-- Pagination is enabled at page level rather than horizontal scroller level. It's a technical trade off since the TVMaze API doesn't expose one to search by TV show gerne & page.
-- Show details is implemented as a seperate page route to enable deep linking to specific shows. Using a modal & deep linking would have required implementing custom routing code. It's easier to rely on browser history using standard path routing.
+- Scroll position & focus is implemented for desktop back-navigation, but for mobile scroll it was intentionally skipped to reduce complexity.
+- Mobile views: I've opted to use vertical scroll to make the most of mobile screen real estate. It's also a more natural gesture for thumb scrolling.
+- Pagination is enabled at page level rather than paging from eachhorizontal scroller. It's a technical trade off since the TVMaze API doesn't expose an API to search by TV show gerne & pagination.
+- Show details is implemented as a seperate page to enable deep linking to specific shows by ID. Using a modal & deep linking would have required implementing custom routing code. It's straightforward to rely on browser history instead for navigation between shows.
 - TVMaze summary HTML is rendered directly with v-html because the content is trusted API content. But in a production application I would use a DOM sanitization package to sanitize v-html content.
-- E2E coverage is focused on the core user flows rather than a complete visual regression.
+- Filters: If implemented further I could have added a filters toolbar. This filter would refine list based on a selected genre. Which would reduce needing to scroll down to a specific genre in page.
+- E2E coverage is focused on the core user flows rather than using visual regression tests or mutation tests.

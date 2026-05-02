@@ -122,6 +122,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+span.info-chip {
+  background-color: var(--color-surface-strong);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
 a {
   color: var(--color-link);
 }

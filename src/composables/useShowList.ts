@@ -1,5 +1,5 @@
-import { ref, computed, onMounted } from 'vue'
-import type { Show } from '@/types/tvShowModel'
+import { ref, computed, onMounted, type ComputedRef } from 'vue'
+import type { Show, ShowsByGenre } from '@/types/tvShowModel'
 import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
 import { ApiErrorTypes } from '@/types/apiErrorModel'
@@ -15,6 +15,11 @@ interface LoadOptions {
 
 type ApiErrorCause = keyof typeof ApiErrorTypes
 
+interface DerivedShowsState {
+  showsTopPick: Show | null
+  showsSortedByGenre: ShowsByGenre
+}
+
 function getErrorCause(err: unknown): ApiErrorCause | undefined {
   if (typeof err !== 'object' || err === null || !('cause' in err)) {
     return undefined
@@ -28,6 +33,11 @@ function getErrorCause(err: unknown): ApiErrorCause | undefined {
   return undefined
 }
 
+/**
+ * Composable to manage fetching and state of TV shows list with pagination, sorting, and error handling.
+ * @param options
+ * @returns
+ */
 export function useShowList(options?: UseShowListOptions) {
   const showsStore = useShowsStore()
 
@@ -41,30 +51,55 @@ export function useShowList(options?: UseShowListOptions) {
     return ids.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
   })
 
-  const rankedShows = computed(() => {
-    return [...shows.value].sort((a, b) => {
-      const aRating = a.rating.average
-      const bRating = b.rating.average
+  const derivedShowsState = computed(() => {
+    const groupedShows = new Map<string, Show[]>()
+    let showsTopPick: Show | null = null
 
-      if (aRating === null && bRating === null) return 0
-      if (aRating === null) return 1
-      if (bRating === null) return -1
+    for (const show of shows.value) {
+      if (!showsTopPick || (show.rating.average ?? 0) > (showsTopPick.rating.average ?? 0)) {
+        showsTopPick = show
+      }
 
-      return bRating - aRating
-    })
-  })
-
-  const showsSortedByGenre = computed(() => {
-    const unsorted = rankedShows.value.reduce((map, show) => {
       const genreKey = show.genres[0] ?? 'Other'
-      const list = map.get(genreKey) ?? []
-      list.push(show)
-      map.set(genreKey, list)
-      return map
-    }, new Map<string, Show[]>())
+      const genreShows = groupedShows.get(genreKey) ?? []
 
-    return new Map([...unsorted.entries()].sort(([a], [b]) => a.localeCompare(b)))
-  })
+      genreShows.push(show)
+      groupedShows.set(genreKey, genreShows)
+    }
+
+    const showsSortedByGenre = new Map(
+      [...groupedShows.entries()]
+        .map(
+          ([genre, genreShows]) =>
+            [
+              genre,
+              [...genreShows].sort((a, b) => {
+                const aRating = a.rating.average
+                const bRating = b.rating.average
+
+                if (aRating === null && bRating === null) return 0
+                if (aRating === null) return 1
+                if (bRating === null) return -1
+
+                return bRating - aRating
+              }),
+            ] as const,
+        )
+        .sort(([a], [b]) => a.localeCompare(b)),
+    ) as ShowsByGenre
+
+    return {
+      showsTopPick,
+      showsSortedByGenre,
+    }
+  }) as ComputedRef<DerivedShowsState>
+
+  /**
+   * Picks the top rated show on each page.
+   */
+  const showsTopPick = computed(() => derivedShowsState.value.showsTopPick)
+
+  const showsSortedByGenre = computed(() => derivedShowsState.value.showsSortedByGenre)
 
   const currentPage = ref<number>(options?.page ?? 0)
 
@@ -128,6 +163,11 @@ export function useShowList(options?: UseShowListOptions) {
     }
   }
 
+  function goToPage(page: number) {
+    const targetPage = currentPage.value + page
+    return load(Math.max(0, targetPage))
+  }
+
   function goToFirstPage() {
     return load(0)
   }
@@ -141,6 +181,7 @@ export function useShowList(options?: UseShowListOptions) {
   return {
     shows,
     showsSortedByGenre,
+    showsTopPick,
     currentPage,
     hasMorePages,
     isAccumulated,
@@ -148,6 +189,7 @@ export function useShowList(options?: UseShowListOptions) {
     appendNextPage,
     previousPage,
     goToFirstPage,
+    goToPage,
     loadPage: load,
     isLoading,
     error,

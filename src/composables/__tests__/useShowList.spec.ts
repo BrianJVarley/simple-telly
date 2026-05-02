@@ -27,6 +27,12 @@ function makeShow(id: number, genre: string, rating: number | null = 8.0): Show 
   }
 }
 
+/**
+ * Helper to mount a dummy component that calls the composable's setup function,
+ * allowing us to test the composable in isolation.
+ * @param setup
+ * @returns
+ */
 function useComposable<T>(setup: () => T): T {
   let result!: T
   const Wrapper = defineComponent({
@@ -77,6 +83,42 @@ describe('useShowList', () => {
     await nextTick()
     await nextTick()
     expect(showsSortedByGenre.value.get('Drama')?.map((show) => show.id)).toEqual([2, 3, 1])
+  })
+
+  it('selects the highest rated show as the top pick', async () => {
+    const shows = [makeShow(1, 'Drama', 6.0), makeShow(2, 'Drama', 9.0), makeShow(3, 'Comedy', 7.5)]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { showsTopPick } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+
+    expect(showsTopPick.value?.id).toBe(2)
+  })
+
+  it('prefers rated shows over null ratings when selecting the top pick', async () => {
+    const shows = [
+      makeShow(1, 'Drama', null),
+      makeShow(2, 'Drama', 8.5),
+      makeShow(3, 'Comedy', 7.5),
+    ]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { showsTopPick } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+
+    expect(showsTopPick.value?.id).toBe(2)
+  })
+
+  it('returns null for the top pick when no shows are loaded', async () => {
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue([])
+
+    const { showsTopPick } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+
+    expect(showsTopPick.value).toBe(null)
   })
 
   it('sorts null ratings to the bottom within genre groups', async () => {
@@ -136,6 +178,38 @@ describe('useShowList', () => {
     expect(showsRef.value.map((show) => show.id)).toEqual([1, 2, 3, 4])
     expect(currentPage.value).toBe(1)
     expect(isAccumulated.value).toBe(true)
+  })
+
+  it('moves forward by a relative number of pages with goToPage', async () => {
+    vi.mocked(api.tvmazeApi.getShows)
+      .mockResolvedValueOnce([makeShow(1, 'Drama', 9.0)])
+      .mockResolvedValueOnce([makeShow(2, 'Comedy', 7.0)])
+
+    const { goToPage, currentPage } = useComposable(() => useShowList({ page: 0 }))
+
+    await nextTick()
+    await nextTick()
+    await goToPage(1)
+    await nextTick()
+
+    expect(currentPage.value).toBe(1)
+    expect(vi.mocked(api.tvmazeApi.getShows)).toHaveBeenLastCalledWith(1)
+  })
+
+  it('clamps negative goToPage offsets at zero', async () => {
+    vi.mocked(api.tvmazeApi.getShows)
+      .mockResolvedValueOnce([makeShow(1, 'Drama', 9.0)])
+      .mockResolvedValueOnce([makeShow(1, 'Drama', 9.0)])
+
+    const { goToPage, currentPage } = useComposable(() => useShowList({ page: 0 }))
+
+    await nextTick()
+    await nextTick()
+    await goToPage(-5)
+    await nextTick()
+
+    expect(currentPage.value).toBe(0)
+    expect(vi.mocked(api.tvmazeApi.getShows)).toHaveBeenLastCalledWith(0)
   })
 
   it('sets error on fetch failure', async () => {

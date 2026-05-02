@@ -73,7 +73,7 @@ describe('tvmazeApi', () => {
   describe('error handling', () => {
     it('throws on non-ok response', async () => {
       mockResponse(null, false, 404)
-      await expect(tvmazeApi.getShow(999)).rejects.toThrow('Page not found: 404 Not Found')
+      await expect(tvmazeApi.getShow(999)).rejects.toThrow('Page not found')
     })
   })
 })

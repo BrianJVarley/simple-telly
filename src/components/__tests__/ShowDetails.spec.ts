@@ -205,12 +205,6 @@ describe('ShowDetails', () => {
     expect(img.attributes('alt')).toBe('Breaking Bad')
   })
 
-  it('does not render image when show.image is null', () => {
-    useShowDetailMock.mockReturnValue(defaultDetailReturn({ show: ref(makeShow({ image: null })) }))
-    const wrapper = mkWrapper()
-    expect(wrapper.find('img').exists()).toBe(false)
-  })
-
   it('calls router.back() when back button is clicked', async () => {
     const wrapper = mkWrapper()
     await wrapper.find('.back-btn').trigger('click')

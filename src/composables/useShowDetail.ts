@@ -3,6 +3,13 @@ import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
 import type { Show, Episode } from '@/types/tvShowModel'
 import type { ApiErrorTypes } from '@/types/apiErrorModel'
+
+
+/**
+ * Composable to manage fetching and state of TV show details and episodes with error handling.
+ * @param showId 
+ * @returns 
+ */
 export function useShowDetail(showId: number) {
   const showsStore = useShowsStore()
 

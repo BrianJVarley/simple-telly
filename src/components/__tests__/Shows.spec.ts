@@ -12,6 +12,7 @@ const mockRouterPush = vi.hoisted(() => vi.fn())
 const mockRouterReplace = vi.hoisted(() => vi.fn())
 const useShowSearchMock = vi.hoisted(() => vi.fn())
 const useShowListMock = vi.hoisted(() => vi.fn())
+const useBreakpointsMock = vi.hoisted(() => vi.fn())
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockRouterPush, replace: mockRouterReplace }),
@@ -30,21 +31,14 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   MagnifyingGlassCircleIcon: { template: '<span class="icon-stub"></span>' },
   ExclamationTriangleIcon: { template: '<span class="error-icon-stub"></span>' },
   ArrowPathIcon: { template: '<span class="retry-icon-stub"></span>' },
+  StarIcon: { template: '<span class="star-icon-stub"></span>' },
 }))
 
 vi.mock('@vueuse/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vueuse/core')>()
-  const { ref } = await import('vue')
   return {
     ...actual,
-    useBreakpoints: vi.fn(() => ({
-      smaller: vi.fn(() => ref(false)), // desktop by default
-    })),
-    useVirtualList: vi.fn(() => ({
-      list: ref([]),
-      containerProps: { onScroll: vi.fn() },
-      wrapperProps: { style: {} },
-    })),
+    useBreakpoints: useBreakpointsMock,
   }
 })
 
@@ -79,10 +73,34 @@ function mkWrapper() {
   })
 }
 
+function makeUseShowListReturn(overrides: Record<string, unknown> = {}) {
+  return {
+    shows: computed(() => []),
+    showsTopPick: computed(() => null),
+    showsSortedByGenre: ref(new Map()),
+    currentPage: ref(1),
+    hasMorePages: ref(true),
+    isAccumulated: ref(false),
+    nextPage: vi.fn(),
+    appendNextPage: vi.fn(),
+    previousPage: vi.fn(),
+    goToFirstPage: vi.fn(),
+    goToPage: vi.fn(),
+    loadPage: vi.fn(),
+    isLoading: ref(false),
+    error: ref(null),
+    refresh: vi.fn(),
+    ...overrides,
+  }
+}
+
 // ── tests ─────────────────────────────────────────────────────────────────────
 describe('ShowsHome', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    useBreakpointsMock.mockReturnValue({
+      smaller: vi.fn(() => ref(false)),
+    })
     useShowSearchMock.mockReturnValue({
       results: ref([]),
       isLoading: ref(false),
@@ -90,16 +108,7 @@ describe('ShowsHome', () => {
       search: mockSearch,
       clear: mockClear,
     })
-    useShowListMock.mockReturnValue({
-      shows: computed(() => []),
-      showsSortedByGenre: ref(new Map()),
-      currentPage: ref(1),
-      nextPage: vi.fn(),
-      previousPage: vi.fn(),
-      isLoading: ref(false),
-      error: ref(null),
-      refresh: vi.fn(),
-    })
+    useShowListMock.mockReturnValue(makeUseShowListReturn())
   })
 
   it('renders the search toggle icon', () => {
@@ -156,75 +165,108 @@ describe('ShowsHome', () => {
 
   it('renders one genre row per entry in showsSortedByGenre', () => {
     const show = makeShow()
-    useShowListMock.mockReturnValue({
-      shows: computed(() => [show]),
-      showsSortedByGenre: ref(
-        new Map([
-          ['Drama', [show]],
-          ['Action', [show]],
-        ]),
-      ),
-      currentPage: ref(1),
-      nextPage: vi.fn(),
-      previousPage: vi.fn(),
-      isLoading: ref(false),
-      error: ref(null),
-      refresh: vi.fn(),
-    })
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        shows: computed(() => [show]),
+        showsSortedByGenre: ref(
+          new Map([
+            ['Drama', [show]],
+            ['Action', [show]],
+          ]),
+        ),
+        currentPage: ref(1),
+      }),
+    )
     const wrapper = mkWrapper()
     expect(wrapper.findAll('.genre-row-stub').length).toBe(2)
   })
 
   it('shows loading state for show list', () => {
-    useShowListMock.mockReturnValue({
-      shows: computed(() => []),
-      showsSortedByGenre: ref(new Map()),
-      currentPage: ref(1),
-      nextPage: vi.fn(),
-      previousPage: vi.fn(),
-      isLoading: ref(true),
-      error: ref(null),
-      refresh: vi.fn(),
-    })
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        isLoading: ref(true),
+      }),
+    )
     const wrapper = mkWrapper()
     expect(wrapper.text()).toContain('Loading shows...')
   })
 
   it('keeps rendered rows visible while loading another page', () => {
     const show = makeShow()
-    useShowListMock.mockReturnValue({
-      shows: computed(() => [show]),
-      showsSortedByGenre: ref(new Map([['Drama', [show]]])),
-      currentPage: ref(2),
-      nextPage: vi.fn(),
-      previousPage: vi.fn(),
-      isLoading: ref(true),
-      error: ref(null),
-      refresh: vi.fn(),
-    })
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        shows: computed(() => [show]),
+        showsSortedByGenre: ref(new Map([['Drama', [show]]])),
+        currentPage: ref(2),
+        isLoading: ref(true),
+      }),
+    )
     const wrapper = mkWrapper()
     expect(wrapper.text()).toContain('Loading shows...')
     expect(wrapper.findAll('.genre-row-stub')).toHaveLength(1)
   })
 
   it('shows error state for show list', () => {
-    useShowListMock.mockReturnValue({
-      shows: computed(() => []),
-      showsSortedByGenre: ref(new Map()),
-      currentPage: ref(1),
-      hasMorePages: ref(true),
-      isAccumulated: ref(false),
-      nextPage: vi.fn(),
-      appendNextPage: vi.fn(),
-      previousPage: vi.fn(),
-      goToFirstPage: vi.fn(),
-      loadPage: vi.fn(),
-      isLoading: ref(false),
-      error: ref({ message: 'Network error' }),
-      refresh: vi.fn(),
-    })
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        error: ref({ message: 'Network error' }),
+      }),
+    )
     const wrapper = mkWrapper()
     expect(wrapper.text()).toContain('Network error')
+  })
+
+  it('renders the top-pick banner on desktop when there is no active query', () => {
+    const show = makeShow({ id: 12, name: 'Top Pick Banner' })
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        shows: computed(() => [show]),
+        showsTopPick: computed(() => show),
+        showsSortedByGenre: ref(new Map([['Drama', [show]]])),
+      }),
+    )
+
+    const wrapper = mkWrapper()
+
+    expect(wrapper.text()).toContain('Pick of the day')
+    expect(wrapper.find('[aria-label="Pick of the day show Top Pick Banner"]').exists()).toBe(true)
+  })
+
+  it('hides the top-pick banner on mobile breakpoints', () => {
+    useBreakpointsMock.mockReturnValue({
+      smaller: vi.fn(() => ref(true)),
+    })
+
+    const show = makeShow({ id: 12, name: 'Top Pick Banner' })
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        shows: computed(() => [show]),
+        showsTopPick: computed(() => show),
+        showsSortedByGenre: ref(new Map([['Drama', [show]]])),
+      }),
+    )
+
+    const wrapper = mkWrapper()
+
+    expect(wrapper.text()).not.toContain('Pick of the day')
+  })
+
+  it('hides the top-pick banner when a search query is active', async () => {
+    const show = makeShow({ id: 12, name: 'Top Pick Banner' })
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        shows: computed(() => [show]),
+        showsTopPick: computed(() => show),
+        showsSortedByGenre: ref(new Map([['Drama', [show]]])),
+      }),
+    )
+
+    const wrapper = mkWrapper()
+
+    await wrapper.find('.icon-stub').trigger('click')
+    await wrapper.find('input[type="search"]').setValue('Banner')
+
+    expect(wrapper.text()).not.toContain('Pick of the day')
   })
 
   it('shows search results when query is present and results exist', async () => {

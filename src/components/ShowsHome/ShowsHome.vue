@@ -10,7 +10,7 @@ import ShowsDesktopGrid from './ShowsDesktopGrid.vue'
 import ShowsSearchResults from './ShowsSearchResults.vue'
 import ShowsMobileList from './ShowsMobileList.vue'
 import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
-
+import ShowsTopPick from './ShowsTopPick.vue'
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobileBp = breakpoints.smaller('md')
 const router = useRouter()
@@ -23,6 +23,7 @@ const initialPage =
   Number.isFinite(initialPageQuery) && initialPageQuery > 0 ? initialPageQuery - 1 : 0
 const {
   shows,
+  showsTopPick,
   showsSortedByGenre,
   currentPage,
   isAccumulated,
@@ -31,7 +32,9 @@ const {
   isLoading: isLoadingShows,
   error: showsListError,
   goToFirstPage,
+  goToPage,
   loadPage,
+  appendNextPage,
   refresh: refreshShows,
 } = useShowList({ page: initialPage })
 const query = ref('')
@@ -93,6 +96,11 @@ watch(
 
 <template>
   <SearchBar v-model:query="query" @clear="onClear" />
+  <ShowsTopPick
+    v-if="!isMobileBp && !query && showsTopPick"
+    :show="showsTopPick"
+    @select="navigateToShowDetails"
+  />
   <ShowsDesktopGrid
     v-if="!isMobileBp"
     :showsSortedByGenre
@@ -104,21 +112,24 @@ watch(
     @refresh="refreshShows"
     @goToFirstPage="goToFirstPage"
     @nextPage="nextPage"
+    @skip-backward="(value) => goToPage(value)"
+    @skip-forward="(value) => goToPage(value)"
     @previousPage="previousPage"
   />
   <div
     class="flex flex-col flex-1 overflow-hidden"
-    :style="{ backgroundColor: 'var(--color-background)', color: 'var(--color-text)' }"
+    :style="{ backgroundColor: 'var(--color-background-soft)', color: 'var(--color-text)' }"
   >
     <ShowsSearchResults :query :results :isLoading :error @select="navigateToShowDetails" />
     <ShowsMobileList
       v-if="isMobileBp"
-      :shows
+      :shows="showsSortedByGenre"
       :isLoading="isLoadingShows"
       :error="showsListError"
       @select="navigateToShowDetails"
       @refresh="refreshShows"
       @goToFirstPage="goToFirstPage"
+      @next-page="appendNextPage"
     />
   </div>
 </template>

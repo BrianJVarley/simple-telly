@@ -7,6 +7,32 @@ test('visits the app root url', async ({ page }) => {
 })
 
 test.describe('Shows Home View @showsHome', () => {
+  test('shows the top-pick banner on desktop and navigates to show details when clicked @topPicksBanner', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const topPickBanner = page.locator('[data-testid="top-picks-banner"]').first()
+    await expect(topPickBanner).toBeVisible()
+
+    await topPickBanner.locator('img').click()
+
+    await expect(page).toHaveURL(/\/shows\/\d+/)
+    await expect(page.locator('h1, [role="alert"]').first()).toBeVisible()
+  })
+
+  test('hides the top-pick banner while search is active @topPicksBanner', async ({ page }) => {
+    await page.goto('/')
+
+    const topPickBanner = page.locator('[data-testid="top-picks-banner"]').first()
+    await expect(topPickBanner).toBeVisible()
+
+    await page.locator('button[aria-label="Toggle search"]').click()
+    await page.locator('input#show-search').fill('Breaking')
+
+    await expect(topPickBanner).toBeHidden()
+  })
+
   test('search bar can be toggled', async ({ page }) => {
     await page.goto('/')
 

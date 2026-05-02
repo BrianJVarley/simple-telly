@@ -39,7 +39,7 @@ function onClear() {
       type="button"
       @click="toggleSearch"
       aria-label="Toggle search"
-      class="flex h-10 w-10 items-center justify-center rounded-full"
+      class="flex h-10 w-10 items-center rounded-full"
     >
       <MagnifyingGlassCircleIcon
         class="search-icon w-6 h-6"

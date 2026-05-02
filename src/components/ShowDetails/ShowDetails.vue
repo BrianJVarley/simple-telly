@@ -57,7 +57,7 @@ watch(
         <img
           :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
           :alt="show.name"
-          class="w-full sm:w-48 rounded-lg object-cover"
+          class="w-1/2 mx-auto aspect-[2/3] sm:mx-0 sm:w-48 sm:aspect-auto rounded-lg object-cover"
         />
         <div class="flex-1">
           <h1
@@ -70,12 +70,7 @@ watch(
           </h1>
 
           <div class="flex gap-2 flex-wrap mb-4" role="list" aria-label="Genres">
-            <span
-              v-for="genre in show.genres"
-              :key="genre"
-              role="listitem"
-              class="detail-genre-chip text-xs px-2 py-1 rounded"
-            >
+            <span v-for="genre in show.genres" :key="genre" role="listitem" class="info-chip">
               {{ genre }}
             </span>
           </div>
@@ -85,6 +80,12 @@ watch(
             <p class="detail-text-soft text-sm"><strong>Language:</strong> {{ show.language }}</p>
             <p class="detail-text-soft text-sm">
               <strong>Rating:</strong> {{ show.rating.average ?? 'N/A' }}
+              <span
+                v-tooltip="'Top rated show'"
+                v-if="(show.rating?.average ?? 0) >= 5"
+                aria-label="Top rated"
+                >⭐</span
+              >
             </p>
             <p class="detail-text-soft text-sm">
               <strong>Premiered:</strong> {{ show.premiered ?? 'N/A' }}
@@ -127,11 +128,6 @@ watch(
 }
 
 .detail-text-soft {
-  color: var(--color-text);
-}
-
-.detail-genre-chip {
-  background-color: var(--color-surface-strong);
   color: var(--color-text);
 }
 </style>

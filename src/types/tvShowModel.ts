@@ -34,3 +34,5 @@ export interface SearchResult {
   score: number
   show: Show
 }
+
+export type ShowsByGenre = Map<string, Show[]>;
