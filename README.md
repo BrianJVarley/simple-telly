@@ -49,6 +49,7 @@ Open the app URL output by CLI `http://localhost:5173/shows`
 
 ```sh
 npm test
+npm run test:libs
 ```
 
 ### End-to-end tests (Playwright)
@@ -79,26 +80,27 @@ npm run lint
 ## Project Structure
 
 - Framework: Vue 3 + Vite + TypeScript
-- State Store: Pinia stores in [src/stores](src/stores)
-- Routing: [src/router/index.ts](src/router/index.ts)
-- Data access: API layer in [src/api/tvmaze-api.ts](src/api/tvmaze-api.ts)
-- Wrapper Views in [src/views](src/views)
-  - Reusable components in [src/components](src/components)
-- Business logic & special behavior bundled into `composables` in [src/composables](src/composables)
+- apps/: Simple Telly Vue app in [apps/simple-telly](apps/simple-telly)
+  - State Store: Pinia stores in [apps/simple-telly/src/stores](apps/simple-telly/src/stores)
+  - Routing: [apps/simple-telly/src/router/index.ts](apps/simple-telly/src/router/index.ts)
+  - Data access: API layer in [apps/simple-telly/src/api/tvmaze-api.ts](apps/simple-telly/src/api/tvmaze-api.ts)
+  - Wrapper Views in [apps/simple-telly/src/views](apps/simple-telly/src/views)
+  - Reusable components in [apps/simple-telly/src/components](apps/simple-telly/src/components)
+- Libs: Packaged NPM library containing reuseable UI components. Imported into the app workspace as package import.
+- Business logic & special behavior bundled into `composables` in [apps/simple-telly/src/composables](apps/simple-telly/src/composables)
 
 ### UX choices
 
 - Responsive layout with desktop and mobile views using tailwind breakpoint classes
 - Theme system with light/dark mode toggle and persisted user preference
 - A basic error handling flow is added to go abck when shows page not found or try again for other error status.
-- Semantic color tokens defined in [src/assets/base.css](src/assets/base.css)
+- Semantic color tokens defined in [apps/simple-telly/src/assets/base.css](apps/simple-telly/src/assets/base.css)
 
 ### Design choices
 
 - Navigation:
   - Pagination retained between navigation from shows to show details views.
   - Focused on readable contrast and accessible UI. By using correct keyboard navigation (Escape, Tab spacebar keys) order and focus order between navigations.
-  
 - Optimizations:
   - Image sources loaded using a mix of lazy loading and low vs eager fetch priority where needed. In addition computed was used to load some image sources. This improved First Contentful Paint metrics in Chrome Lighthouse performance scan (`0.3s`). See: [Lighthouse scan report](performance-reports-chrome/simple-telly_april_02_scan_4173.html)
   - Search uses a debounce function to prevent spamming search requests.
@@ -106,11 +108,9 @@ npm run lint
   - In mobile views, a tv shows are batched by page as user scrolls to the end of the list.
 
 - A11Y:
-- Accessibility best practices adopted for voice over screen reader, using aria-* attributed where needed.
-
+- Accessibility best practices adopted for voice over screen reader, using aria-\* attributed where needed.
 
 - `WCAG 2AA` targeted in E2E tests to ensure application is compliant.
-
 
 ## Architecture Decisions
 
@@ -141,6 +141,7 @@ The app uses local component state for view-specific state (`ref`) and shared co
 
 > Some trade offs in the implementation I can think of:
 
+- Libs contains few components, if time permitted I would package all components, data-access and composeables into seperate libs and keep the app as a bare skeleton app with configuration options.
 - Scroll position & focus is implemented for desktop back-navigation, but for mobile scroll it was intentionally skipped to reduce complexity.
 - Mobile views: I've opted to use vertical scroll to make the most of mobile screen real estate. It's also a more natural gesture for thumb scrolling.
 - Pagination is enabled at page level rather than paging from eachhorizontal scroller. It's a technical trade off since the TVMaze API doesn't expose an API to search by TV show gerne & pagination.

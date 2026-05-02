@@ -1,14 +1,16 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
-  "exclude": ["src/**/__tests__/*"],
+  "include": ["apps/simple-telly/env.d.ts", "apps/simple-telly/src/**/*", "apps/simple-telly/src/**/*.vue"],
+  "exclude": ["apps/simple-telly/src/**/__tests__/*"],
   "compilerOptions": {
     // Extra safety for array and object lookups, but may have false positives.
     "noUncheckedIndexedAccess": true,
 
     // Path mapping for cleaner imports.
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./apps/simple-telly/src/*"],
+      "@simple-telly/ui": ["./libs/simple-telly-ui/src/index.ts"],
+      "@simple-telly/ui/*": ["./libs/simple-telly-ui/src/*"]
     },
 
     // `vue-tsc --build` produces a .tsbuildinfo file for incremental type-checking.

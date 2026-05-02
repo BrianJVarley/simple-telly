@@ -2,6 +2,9 @@
   "name": "simple-telly",
   "version": "0.0.0",
   "private": true,
+  "workspaces": [
+    "libs/*"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +12,7 @@
     "serve:production": "npm run build && npm run preview",
     "preview": "vite preview",
     "test": "vitest",
+    "test:libs": "vitest --run --dir libs",
     "test:e2e": "playwright test",
     "test:shows:e2e": "playwright test e2e/simple-telly.spec.ts -g @showsHome",
     "build-only": "vite build",
