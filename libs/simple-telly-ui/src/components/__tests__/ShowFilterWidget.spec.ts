@@ -66,7 +66,7 @@ describe('ShowFilterWidget', () => {
     await wrapper.find('button[aria-label="Filter shows by genre"]').trigger('click')
     const items = wrapper.findAll('[role="menuitem"]')
     expect(items).toHaveLength(1)
-    expect(items[0].text().trim()).toBe('All')
+    expect(items[0]?.text().trim()).toBe('All')
   })
 
   it('deduplicates genres in the dropdown', async () => {
