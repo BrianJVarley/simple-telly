@@ -111,9 +111,8 @@ Pull requests trigger the [PR workflow](.github/workflows/pull-request-checks.ym
   - Search uses a debounce function to prevent spamming search requests.
   - Shows are loaded by page rather than one large block of data. This reduces load time and rendering effort of scrollers.
   - In mobile views, a tv shows are batched by page as user scrolls to the end of the list.
-
 - A11Y:
-- Accessibility best practices adopted for voice over screen reader, using aria-\* attributed where needed.
+  - Accessibility best practices adopted for voice over screen reader, using aria-\* attributed where needed.
 
 - `WCAG 2AA` targeted in E2E tests to ensure application is compliant.
 
@@ -138,9 +137,6 @@ The business logic is encapsulated into Vue composables to keep the components p
 - navigation focus logic
 - document title updates
 
-### State approach
-
-The app uses local component state for view-specific state (`ref`) and shared composables & Pinia when state needs to persist between navigation events. For example the page number query is retained when exiting the show details view.
 
 ## Trade-offs
 
@@ -154,4 +150,4 @@ The app uses local component state for view-specific state (`ref`) and shared co
 - Refresh scenarios: On browser refresh variable values reset to initial values. Some refresh handling logic could be added to cache page, genre filters in browser session storage to solve this.
 - TVMaze summary HTML is rendered directly with v-html because the content is trusted API content. But in a production application I would use a DOM sanitization package to sanitize v-html content.
 - **Performance**: There are some metrics that can be improved on in last [Lighthouse scan report](performance-reports-chrome/simple-telly-v1-perf-report-1.html). Such as Largest Contentful Paint & Cumulative Layout Shift.
-- E2E coverage is focused on the core user flows rather than using visual regression tests or mutation tests.
+
