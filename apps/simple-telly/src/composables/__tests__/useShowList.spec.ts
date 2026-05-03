@@ -147,6 +147,65 @@ describe('useShowList', () => {
     expect(showsSortedByGenre.value.get('Comedy')).toHaveLength(1)
   })
 
+  it('filters shows data by given genre', async () => {
+    const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy'), makeShow(3, 'Drama')]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { filterShowsByGenre, shows: showsRef } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+
+    filterShowsByGenre('Drama')
+    await nextTick()
+
+    expect(showsRef.value).toHaveLength(2)
+    expect(showsRef.value.every((show) => show.genres.includes('Drama'))).toBe(true)
+  })
+
+  it('preserves available genre filters across repeated filtering', async () => {
+    const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy'), makeShow(3, 'Drama')]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const {
+      filterShowsByGenre,
+      shows: showsRef,
+      showsSortedByGenre,
+    } = useComposable(() => useShowList({ page: 0 }))
+
+    await nextTick()
+    await nextTick()
+
+    // Filter to Drama first, then to Comedy — each should show only that genre's map entry
+    filterShowsByGenre('Drama')
+    await nextTick()
+    expect(showsSortedByGenre.value.has('Drama')).toBe(true)
+    expect(showsSortedByGenre.value.has('Comedy')).toBe(false)
+
+    filterShowsByGenre('Comedy')
+    await nextTick()
+    expect(showsRef.value).toHaveLength(1)
+    expect(showsRef.value[0]?.genres).toContain('Comedy')
+    expect(showsSortedByGenre.value.has('Comedy')).toBe(true)
+    expect(showsSortedByGenre.value.has('Drama')).toBe(false)
+
+    // Clearing with All should restore both genres
+    filterShowsByGenre('All')
+    await nextTick()
+    expect(showsSortedByGenre.value.has('Drama')).toBe(true)
+    expect(showsSortedByGenre.value.has('Comedy')).toBe(true)
+  })
+
+  it('return show genres list', async () => {
+    const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy'), makeShow(3, 'Drama')]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { showGenres } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+    expect(showGenres.value).toContain('Drama')
+    expect(showGenres.value).toContain('Comedy')
+  })
+
   it('falls back to "Other" for shows with no genres', async () => {
     const show = makeShow(1, '')
     show.genres = []
@@ -196,7 +255,7 @@ describe('useShowList', () => {
     expect(vi.mocked(api.tvmazeApi.getShows)).toHaveBeenLastCalledWith(1)
   })
 
-  it('clamps negative goToPage offsets at zero', async () => {
+  it('converts negative goToPage offsets to zero', async () => {
     vi.mocked(api.tvmazeApi.getShows)
       .mockResolvedValueOnce([makeShow(1, 'Drama', 9.0)])
       .mockResolvedValueOnce([makeShow(1, 'Drama', 9.0)])
@@ -246,5 +305,53 @@ describe('useShowList', () => {
     expect(hasMorePages.value).toBe(false)
     expect(currentPage.value).toBe(0)
     expect(isLoading.value).toBe(false)
+  })
+
+  it('showsSortedByGenre scopes to only the active genre after filtering', async () => {
+    const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy'), makeShow(3, 'Drama')]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { filterShowsByGenre, showsSortedByGenre } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+
+    filterShowsByGenre('Drama')
+    await nextTick()
+
+    expect(showsSortedByGenre.value.has('Drama')).toBe(true)
+    expect(showsSortedByGenre.value.has('Comedy')).toBe(false)
+    expect(showsSortedByGenre.value.get('Drama')).toHaveLength(2)
+  })
+
+  it('showsSortedByGenre restores the full map when All is selected', async () => {
+    const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy')]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { filterShowsByGenre, showsSortedByGenre } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+
+    filterShowsByGenre('Drama')
+    await nextTick()
+    filterShowsByGenre('All')
+    await nextTick()
+
+    expect(showsSortedByGenre.value.has('Drama')).toBe(true)
+    expect(showsSortedByGenre.value.has('Comedy')).toBe(true)
+  })
+
+  it('does not mutate shows when filtering by an unknown genre', async () => {
+    const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy')]
+    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
+
+    const { filterShowsByGenre, shows: showsRef } = useComposable(() => useShowList({ page: 0 }))
+    await nextTick()
+    await nextTick()
+
+    const countBefore = showsRef.value.length
+    filterShowsByGenre('SciFi')
+    await nextTick()
+
+    expect(showsRef.value.length).toBe(countBefore)
   })
 })

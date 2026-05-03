@@ -1,6 +1,11 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["apps/simple-telly/env.d.ts", "apps/simple-telly/src/**/*", "apps/simple-telly/src/**/*.vue"],
+  "include": [
+    "apps/simple-telly/env.d.ts",
+    "apps/simple-telly/src/**/*",
+    "apps/simple-telly/src/**/*.vue",
+    "libs/simple-telly-ui/src/directives/tooltip.ts"
+  ],
   "exclude": ["apps/simple-telly/src/**/__tests__/*"],
   "compilerOptions": {
     // Extra safety for array and object lookups, but may have false positives.

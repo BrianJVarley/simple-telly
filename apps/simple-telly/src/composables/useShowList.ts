@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, type ComputedRef } from 'vue'
+import { ref, computed, onMounted, watch, type ComputedRef } from 'vue'
 import type { Show, ShowsByGenre } from '@/types/tvShowModel'
 import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
@@ -41,25 +41,28 @@ function getErrorCause(err: unknown): ApiErrorCause | undefined {
 export function useShowList(options?: UseShowListOptions) {
   const showsStore = useShowsStore()
 
-  const ids = ref<number[]>([])
+  const allShowIds = ref<number[]>([])
+  const showIds = ref<number[]>([])
   const isLoading = ref(false)
   const hasMorePages = ref(true)
   const isAccumulated = ref(false)
   const error = ref<{ message: string; cause?: ApiErrorCause | undefined } | null>(null)
 
   const shows = computed(() => {
-    return ids.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
+    return showIds.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
   })
 
-  const totalShows = computed(() =>
-    shows.value.length ?? 0,
-  )
+  const totalShows = computed(() => shows.value.length ?? 0)
+
+  const allShows = computed(() => {
+    return allShowIds.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
+  })
 
   const derivedShowsState = computed(() => {
     const groupedShows = new Map<string, Show[]>()
     let showsTopPick: Show | null = null
 
-    for (const show of shows.value) {
+    for (const show of allShows.value) {
       if (!showsTopPick || (show.rating.average ?? 0) > (showsTopPick.rating.average ?? 0)) {
         showsTopPick = show
       }
@@ -102,10 +105,46 @@ export function useShowList(options?: UseShowListOptions) {
    * Picks the top rated show on each page.
    */
   const showsTopPick = computed(() => derivedShowsState.value.showsTopPick)
-
   const showsSortedByGenre = computed(() => derivedShowsState.value.showsSortedByGenre)
+  const showGenres = ref<string[]>([])
+  const activeGenreFilter = ref<string | null>(null)
+
+  const filteredShowsSortedByGenre = computed(() => {
+    if (!activeGenreFilter.value || activeGenreFilter.value === 'All') {
+      return showsSortedByGenre.value
+    }
+    const genreShows = showsSortedByGenre.value.get(activeGenreFilter.value)
+    if (!genreShows) return new Map() as ShowsByGenre
+    return new Map([[activeGenreFilter.value, genreShows]]) as ShowsByGenre
+  })
+
+  const showGenresWatch = watch(showsSortedByGenre, (groupedShows) => {
+    if (groupedShows.size === 0) {
+      return
+    }
+
+    showGenres.value = Array.from(groupedShows.keys())
+    showGenresWatch()
+  })
 
   const currentPage = ref<number>(options?.page ?? 0)
+
+  const filterShowsByGenre = (genre: string) => {
+    activeGenreFilter.value = genre
+
+    if (genre === 'All') {
+      showIds.value = [...allShowIds.value]
+      isAccumulated.value = false
+      return
+    }
+
+    // Filter shows based on genre filter selection
+    const genreShows = showsSortedByGenre.value.get(genre)
+    if (genreShows) {
+      showIds.value = genreShows.map((show) => show.id)
+      isAccumulated.value = false
+    }
+  }
 
   async function load(page?: number, loadOptions: LoadOptions = {}) {
     const targetPage = page ?? currentPage.value
@@ -125,11 +164,13 @@ export function useShowList(options?: UseShowListOptions) {
       showsStore.upsertMany(data)
 
       if (append) {
-        const existingIds = new Set(ids.value)
-        ids.value = [...ids.value, ...nextIds.filter((id) => !existingIds.has(id))]
+        const existingIds = new Set(allShowIds.value)
+        allShowIds.value = [...allShowIds.value, ...nextIds.filter((id) => !existingIds.has(id))]
       } else {
-        ids.value = nextIds
+        allShowIds.value = nextIds
       }
+
+      showIds.value = [...allShowIds.value]
 
       currentPage.value = targetPage
       hasMorePages.value = data.length > 0
@@ -184,14 +225,16 @@ export function useShowList(options?: UseShowListOptions) {
 
   return {
     shows,
-    showsSortedByGenre,
+    showsSortedByGenre: filteredShowsSortedByGenre,
     showsTopPick,
     currentPage,
     hasMorePages,
     isAccumulated,
     totalShows,
+    showGenres,
     nextPage,
     appendNextPage,
+    filterShowsByGenre,
     previousPage,
     goToFirstPage,
     goToPage,

@@ -43,7 +43,7 @@ function onClear() {
     >
       <MagnifyingGlassCircleIcon
         data-testid="search-icon-desktop"
-        class="search-icon hidden h-8 w-8 sm:block"
+        class="search-icon hidden h-10 w-10 sm:block"
         v-tooltip="{ text: 'Search for Shows', placement: 'right' }"
       />
       <MagnifyingGlassCircleIcon
@@ -120,6 +120,7 @@ function onClear() {
   background-color: var(--color-background-mute);
   color: var(--color-text);
   border: 1px solid var(--color-border);
+  margin-right: 1rem;
 }
 
 .search-input::placeholder {

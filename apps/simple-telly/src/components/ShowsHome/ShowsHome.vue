@@ -11,6 +11,8 @@ import ShowsSearchResults from './ShowsSearchResults.vue'
 import ShowsMobileList from './ShowsMobileList.vue'
 import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
 import ShowsTopPick from './ShowsTopPick.vue'
+import { ShowFilterWidget } from '@simple-telly/ui'
+
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobileBp = breakpoints.smaller('md')
 const router = useRouter()
@@ -22,13 +24,14 @@ const initialPageQuery = Number(route.query.page ?? 1)
 const initialPage =
   Number.isFinite(initialPageQuery) && initialPageQuery > 0 ? initialPageQuery - 1 : 0
 const {
-  shows,
   showsTopPick,
   showsSortedByGenre,
+  showGenres,
   currentPage,
   isAccumulated,
   nextPage,
   previousPage,
+  filterShowsByGenre,
   totalShows,
   isLoading: isLoadingShows,
   error: showsListError,
@@ -54,6 +57,17 @@ function navigateToShowDetails(showId: number) {
   router.push({ name: 'show-details', params: { id: showId }, query: {} })
 }
 
+/**
+ *  Apply genre filter and update URL query parameter for deep linking
+ * @param genre
+ */
+function onGenreFilterApplied(genre: string) {
+  // clear any active search query when filtering by genre
+  onClear()
+  filterShowsByGenre(genre)
+  router.replace({ query: { ...route.query, genre: genre === 'All' ? undefined : genre } })
+}
+
 onMounted(() => {
   setShowsPageTitle()
 })
@@ -65,6 +79,10 @@ onActivated(async () => {
 })
 
 watch(query, (q) => search(q))
+
+/**
+ * Sync current page with URL query parameter for deep links
+ */
 watch(currentPage, (page) => {
   if (route.name !== 'home' && route.name !== 'shows') {
     return
@@ -72,16 +90,22 @@ watch(currentPage, (page) => {
 
   router.replace({
     name: route.name,
-    query: { page: String(page + 1) },
+    query: { ...route.query, page: String(page + 1) },
   })
 })
 
+/**
+ * Resize to desktop / tablet breakpoint, ugh several pages on mobile and then switches to desktop, reload current page
+ */
 watch(isMobileBp, (isMobile) => {
   if (!isMobile && isAccumulated.value) {
     loadPage(currentPage.value)
   }
 })
 
+/**
+ * Re-apply page filter when navigating back to the shows list
+ */
 watch(
   () => route.query.page,
   (page) => {
@@ -93,10 +117,33 @@ watch(
     }
   },
 )
+
+/**
+ * Reapply selected genre filter when navigating back to the shows list
+ */
+watch(
+  () => route.query.genre,
+  (genre) => {
+    if (genre) {
+      filterShowsByGenre(genre as string)
+    }
+  },
+)
 </script>
 
 <template>
-  <SearchBar v-model:query="query" @clear="onClear" />
+  <div class="search-filter-container sm:gap-4">
+    <SearchBar data-testid="search-bar" v-model:query="query" @clear="onClear" />
+    <ShowFilterWidget
+      data-testid="show-filter-widget"
+      :genres="showGenres"
+      @filterApplied="
+        (value: string) => {
+          onGenreFilterApplied(value)
+        }
+      "
+    />
+  </div>
   <Transition name="fade">
     <ShowsTopPick
       v-if="!isMobileBp && !query && showsTopPick"
@@ -104,10 +151,10 @@ watch(
       @select="navigateToShowDetails"
     />
   </Transition>
+
   <ShowsDesktopGrid
     v-if="!isMobileBp"
-    :showsSortedByGenre
-    :shows
+    :shows="showsSortedByGenre"
     :isLoading="isLoadingShows"
     :error="showsListError"
     :currentPage="currentPage + 1"
@@ -119,10 +166,7 @@ watch(
     @skip-forward="(value) => goToPage(value)"
     @previousPage="previousPage"
   />
-  <div
-    class="flex flex-col flex-1 overflow-hidden"
-    :style="{ backgroundColor: 'var(--color-background-soft)', color: 'var(--color-text)' }"
-  >
+  <div class="flex flex-col flex-1 overflow-hidden">
     <ShowsSearchResults :query :results :isLoading :error @select="navigateToShowDetails" />
     <ShowsMobileList
       v-if="isMobileBp"
@@ -139,6 +183,16 @@ watch(
 </template>
 
 <style scoped>
+.search-filter-container {
+  display: grid;
+  grid-template-columns: 1fr auto; /* icon | input | genre filter */
+  align-items: center;
+  gap: 1rem;
+  padding-right: 3rem;
+  background-color: var(--color-background-soft);
+  padding-bottom: 0.3rem;
+  padding-top: 0.1rem;
+}
 .fade-enter-active,
 .fade-leave-active {
   transition:

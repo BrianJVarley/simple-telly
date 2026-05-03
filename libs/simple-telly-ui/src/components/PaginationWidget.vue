@@ -54,7 +54,7 @@ function onSkipForward() {
 
 <template>
   <nav
-    class="flex items-center justify-center-safe gap-3 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white"
+    class="pagination-container flex items-center justify-center gap-3 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white"
     aria-label="Pagination"
   >
     <button
@@ -69,6 +69,7 @@ function onSkipForward() {
       data-testid="skip-backward-btn"
       :aria-label="`Go back ${skipNavigationThreshold} pages`"
       @click="onSkipBackward()"
+      v-tooltip="{ text: `Go back ${skipNavigationThreshold} pages`, placement: 'left' }"
     >
       {{ '<<' }}
     </button>
@@ -111,8 +112,14 @@ function onSkipForward() {
       data-testid="skip-forward-btn"
       :aria-label="`Go forward ${skipNavigationThreshold} pages`"
       @click="onSkipForward()"
+      v-tooltip="{ text: `Go forward ${skipNavigationThreshold} pages`, placement: 'right' }"
     >
       {{ '>>' }}
     </button>
   </nav>
 </template>
+<style>
+.pagination-container {
+  background-color: var(--color-background-soft);
+}
+</style>

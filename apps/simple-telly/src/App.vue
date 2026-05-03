@@ -46,7 +46,7 @@ watch(theme, (mode) => {
       }"
     >
       <RouterLink
-        to="/shows?page=1"
+        to="/shows?page=1&genre=All"
         class="flex items-center gap-2 hover:opacity-80 transition-opacity"
       >
         <img
@@ -60,6 +60,7 @@ watch(theme, (mode) => {
         <span class="font-semibold text-lg tracking-tight">Simple Telly</span>
       </RouterLink>
 
+      <!-- Theme toggle -->
       <button
         type="button"
         class="ml-auto rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"

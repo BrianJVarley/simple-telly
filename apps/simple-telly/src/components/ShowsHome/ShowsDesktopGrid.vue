@@ -6,8 +6,7 @@ import type { Show } from '@/types/tvShowModel'
 import type { ApiErrorTypes } from '@/types/apiErrorModel'
 
 defineProps<{
-  showsSortedByGenre: Map<string, Show[]>
-  shows: Show[]
+  shows: Map<string, Show[]>
   isLoading: boolean
   error: { message: string; cause?: keyof typeof ApiErrorTypes | undefined } | null
   currentPage: number
@@ -27,7 +26,7 @@ const emit = defineEmits<{
 <template>
   <div role="region" aria-label="Featured shows by genre">
     <div
-      v-if="isLoading && !shows.length"
+      v-if="isLoading && !shows.size"
       class="text-sm px-4 py-3"
       :style="{ color: 'var(--color-text-muted)' }"
       aria-busy="true"
@@ -35,7 +34,7 @@ const emit = defineEmits<{
       Loading shows...
     </div>
     <ApiError
-      v-else-if="error && !shows.length"
+      v-else-if="error && !shows.size"
       :message="error.message"
       :cause="error.cause"
       @retry="emit('refresh')"
@@ -54,7 +53,7 @@ const emit = defineEmits<{
           Loading shows...
         </div>
         <ShowsGenreRow
-          v-for="[genre, genreShows] in showsSortedByGenre"
+          v-for="[genre, genreShows] in shows"
           :key="genre"
           :genre="genre"
           :shows="genreShows"
@@ -63,14 +62,14 @@ const emit = defineEmits<{
       <Pagination
         v-if="!hasSearchResults"
         :currentPage="currentPage"
-        :disableNext="!shows.length"
+        :disableNext="shows.size === 0"
         @previousPage="emit('previousPage')"
         @skip-backward="(value) => emit('skipBackward', value)"
         @skip-forward="(value) => emit('skipForward', value)"
         @nextPage="emit('nextPage')"
       />
       <ApiError
-        v-if="error && shows.length"
+        v-if="error && !shows.size"
         :message="error.message"
         :cause="error.cause"
         @retry="emit('refresh')"
