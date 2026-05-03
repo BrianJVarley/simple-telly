@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ApiErrorTypes } from '@/types/apiErrorModel'
+import { SHOW_PLACEHOLDER_IMAGE } from '@/constants/images'
 import ApiError from '../ErrorHandling/ApiError.vue'
 import type { Show, ShowsByGenre } from '@/types/tvShowModel'
 
@@ -23,7 +24,6 @@ type MobileRow =
   | { type: 'show'; key: string; genre: string; show: Show }
 
 const genreEntries = computed<[string, Show[]][]>(() => Array.from(props.shows.entries()))
-
 
 /**
  * Flattens the shows grouped by genre into a single list of rows for mobile template
@@ -93,7 +93,7 @@ function onScroll(event: Event) {
             class="flex items-center gap-4 py-2 border-b border-gray-800 hover:bg-gray-800 rounded px-2 cursor-pointer"
           >
             <img
-              :src="row.show?.image?.medium ?? '/images/show-placeholder-404.svg'"
+              :src="row.show?.image?.medium ?? SHOW_PLACEHOLDER_IMAGE"
               :alt="row.show.name"
               loading="lazy"
               fetchpriority="low"

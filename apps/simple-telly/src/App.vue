@@ -53,8 +53,8 @@ watch(theme, (mode) => {
           src="@/assets/smtv-logo.svg"
           alt="Simple Telly"
           aria-label="Simple Telly logo"
-          width="28"
-          height="28"
+          width="40"
+          height="40"
           class="rounded"
         />
         <span class="font-semibold text-lg tracking-tight">Simple Telly</span>

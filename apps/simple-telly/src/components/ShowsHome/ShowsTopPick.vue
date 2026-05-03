@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Show } from '@/types/tvShowModel'
+import { SHOW_PLACEHOLDER_IMAGE } from '@/constants/images'
 import { StarIcon } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
@@ -9,7 +10,7 @@ const emit = defineEmits<{
   select: [showId: number]
 }>()
 
-const topPickSrc = computed(() => show?.image?.original ?? '/images/show-placeholder-404.svg')
+const topPickSrc = computed(() => show?.image?.original ?? SHOW_PLACEHOLDER_IMAGE)
 </script>
 
 <template>

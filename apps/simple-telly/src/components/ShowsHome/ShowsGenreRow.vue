@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHorizontalScroll } from '@/composables/useHorizontalScroll'
 import { useShowNavigation } from '@/composables/useShowNavigation'
+import { SHOW_PLACEHOLDER_IMAGE } from '@/constants/images'
 import type { Show } from '@/types/tvShowModel'
 
 defineProps<{ genre: string; shows: Show[] }>()
@@ -60,7 +61,7 @@ function navigateToShowDetails(showId: number) {
           class="flex-shrink-0 w-24 mt-1 mb-1 cursor-pointer hover:scale-105 transition-transform"
         >
           <img
-            :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
+            :src="show?.image?.medium ?? SHOW_PLACEHOLDER_IMAGE"
             :alt="show.name"
             loading="lazy"
             fetchpriority="low"
@@ -78,7 +79,13 @@ function navigateToShowDetails(showId: number) {
                 >⭐</span
               >
             </p>
-            <p :aria-label="`Genres: ${genre}`" class="text-xs truncate" style="color: var(--color-text-muted)">{{ genre }}</p>
+            <p
+              :aria-label="`Genres: ${genre}`"
+              class="text-xs truncate"
+              style="color: var(--color-text-muted)"
+            >
+              {{ genre }}
+            </p>
           </div>
         </div>
       </div>

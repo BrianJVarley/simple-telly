@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { SHOW_PLACEHOLDER_IMAGE } from '@/constants/images'
 import type { SearchResult } from '@/types/tvShowModel'
 
 const props = defineProps<{
@@ -54,7 +55,7 @@ const announcement = computed(() => {
         class="rounded-lg overflow-hidden bg-gray-800 hover:scale-105 transition-transform cursor-pointer"
       >
         <img
-          :src="show?.image?.medium ?? '/images/show-placeholder-404.svg'"
+          :src="show?.image?.medium ?? SHOW_PLACEHOLDER_IMAGE"
           :alt="show.name"
           loading="lazy"
           fetchpriority="low"
