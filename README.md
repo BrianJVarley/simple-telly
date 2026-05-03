@@ -8,6 +8,7 @@ A Vue 3 app for browsing TV shows with a search feature and show details page. U
 - Shows list view: `/` or `/shows?page=1`
 - Show details view: `/shows/:id`
 - Search and clear TV show queries
+- Filter shows list by TV show genre ("Acrtion", "Comedy"..)
 - Pagination and TV show browsing sorted genre & descending rating
 
 ## Quick Start
@@ -103,10 +104,10 @@ Pull requests trigger the [PR workflow](.github/workflows/pull-request-checks.ym
 ### Design choices
 
 - Navigation:
-  - Pagination retained between navigation from shows to show details views.
+  - Pagination & genre filters are retained between navigation from shows to show details views. This is a common navigation pattern to retain selected view filters on back navigation.
   - Focused on readable contrast and accessible UI. By using correct keyboard navigation (Escape, Tab spacebar keys) order and focus order between navigations.
 - Optimizations:
-  - Image sources loaded using a mix of lazy loading and low vs eager fetch priority where needed. In addition computed was used to load some image sources. This improved First Contentful Paint metrics in Chrome Lighthouse performance scan (`0.3s`). See: [Lighthouse scan report](performance-reports-chrome/simple-telly_april_02_scan_4173.html)
+  - Image sources loaded using a mix of lazy loading and low vs eager fetch priority where needed. In addition computed was used to load some image sources. This improved First Contentful Paint metrics in Chrome Lighthouse performance scan (`0.4s`). See: [Lighthouse scan report](./performance-reports-chrome/simple-telly-v1-perf-report-1.html)
   - Search uses a debounce function to prevent spamming search requests.
   - Shows are loaded by page rather than one large block of data. This reduces load time and rendering effort of scrollers.
   - In mobile views, a tv shows are batched by page as user scrolls to the end of the list.
@@ -145,12 +146,12 @@ The app uses local component state for view-specific state (`ref`) and shared co
 
 > Some trade offs in the implementation I can think of:
 
-- Libs contains few components, if time permitted I would package all components, data-access and composeables into seperate libs and keep the app as a bare skeleton app with configuration options.
-- Scroll position & focus is implemented for desktop back-navigation, but for mobile scroll it was intentionally skipped to reduce complexity.
+- Libs contains subset of components, if developed further I would package all components, data-access and composeables into seperate libs. Then keep the app as a shell which imports the building blocks for the app & configuration option.
 - Mobile views: I've opted to use vertical scroll to make the most of mobile screen real estate. It's also a more natural gesture for thumb scrolling.
-- Pagination is enabled at page level rather than paging from eachhorizontal scroller. It's a technical trade off since the TVMaze API doesn't expose an API to search by TV show gerne & pagination.
+- Pagination is enabled at page level rather than paging from each horizontal scroller. It's a technical trade off since the TVMaze API doesn't expose an API to search by TV show gerne & pagination.
+- Filter & Search combination: I've gone with the simpler option of clearing search query when a genre filter is applied. But further work could be done to have a combined filter query.
 - Show details is implemented as a seperate page to enable deep linking to specific shows by ID. Using a modal & deep linking would have required implementing custom routing code. It's straightforward to rely on browser history instead for navigation between shows.
+- Refresh scenarios: On browser refresh variable values reset to initial values. Some refresh handling logic could be added to cache page, genre filters in browser session storage to solve this.
 - TVMaze summary HTML is rendered directly with v-html because the content is trusted API content. But in a production application I would use a DOM sanitization package to sanitize v-html content.
-- **Performance**: There are some metrics that can be improved on in last [Lighthouse scan report](performance-reports-chrome/simple-telly_april_02_scan_4173.html). Such as Largest Contentful Paint & Cumulative Layout Shift.
-- Filters: If implemented further I could have added a filters toolbar. This filter would refine list based on a selected genre. Which would reduce needing to scroll down to a specific genre in page.
+- **Performance**: There are some metrics that can be improved on in last [Lighthouse scan report](performance-reports-chrome/simple-telly-v1-perf-report-1.html). Such as Largest Contentful Paint & Cumulative Layout Shift.
 - E2E coverage is focused on the core user flows rather than using visual regression tests or mutation tests.

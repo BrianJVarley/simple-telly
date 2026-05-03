@@ -14,9 +14,11 @@ const useShowSearchMock = vi.hoisted(() => vi.fn())
 const useShowListMock = vi.hoisted(() => vi.fn())
 const useBreakpointsMock = vi.hoisted(() => vi.fn())
 
+let mockRouteQueryValue: Record<string, string> = {}
+
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockRouterPush, replace: mockRouterReplace }),
-  useRoute: () => ({ query: {} }),
+  useRoute: () => ({ query: mockRouteQueryValue, name: 'home' }),
 }))
 
 vi.mock('@/composables/useShowSearch', () => ({
@@ -32,6 +34,7 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   ExclamationTriangleIcon: { template: '<span class="error-icon-stub"></span>' },
   ArrowPathIcon: { template: '<span class="retry-icon-stub"></span>' },
   StarIcon: { template: '<span class="star-icon-stub"></span>' },
+  FunnelIcon: { template: '<span class="funnel-icon-stub"></span>' },
 }))
 
 vi.mock('@vueuse/core', async (importOriginal) => {
@@ -78,9 +81,12 @@ function makeUseShowListReturn(overrides: Record<string, unknown> = {}) {
     shows: computed(() => []),
     showsTopPick: computed(() => null),
     showsSortedByGenre: ref(new Map()),
+    showGenres: ref<string[]>([]),
+    filterShowsByGenre: vi.fn(),
     currentPage: ref(1),
     hasMorePages: ref(true),
     isAccumulated: ref(false),
+    totalShows: computed(() => 0),
     nextPage: vi.fn(),
     appendNextPage: vi.fn(),
     previousPage: vi.fn(),
@@ -98,6 +104,7 @@ function makeUseShowListReturn(overrides: Record<string, unknown> = {}) {
 describe('ShowsHome', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRouteQueryValue = {}
     useBreakpointsMock.mockReturnValue({
       smaller: vi.fn(() => ref(false)),
     })
@@ -376,5 +383,54 @@ describe('ShowsHome', () => {
       params: { id: 7 },
       query: {},
     })
+  })
+
+  it('passes showGenres to the ShowFilterWidget genres prop', () => {
+    const mockFilterFn = vi.fn()
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        showGenres: ref(['Drama', 'Comedy', 'Action']),
+        filterShowsByGenre: mockFilterFn,
+      }),
+    )
+    const wrapper = mkWrapper()
+    const filterWidget = wrapper.findComponent({ name: 'ShowFilterWidget' })
+    expect(filterWidget.exists()).toBe(true)
+    expect(filterWidget.props('genres')).toEqual(['Drama', 'Comedy', 'Action'])
+  })
+
+  it('calls filterShowsByGenre and replaces route with genre param on filter selection', async () => {
+    const mockFilterFn = vi.fn()
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        showGenres: ref(['Drama', 'Comedy']),
+        filterShowsByGenre: mockFilterFn,
+      }),
+    )
+    const wrapper = mkWrapper()
+    const filterWidget = wrapper.findComponent({ name: 'ShowFilterWidget' })
+    await filterWidget.vm.$emit('filterApplied', 'Drama')
+    expect(mockFilterFn).toHaveBeenCalledWith('Drama')
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      expect.objectContaining({ query: expect.objectContaining({ genre: 'Drama' }) }),
+    )
+  })
+
+  it('removes genre query param when All is selected', async () => {
+    const mockFilterFn = vi.fn()
+    mockRouteQueryValue = { genre: 'Drama' }
+    useShowListMock.mockReturnValue(
+      makeUseShowListReturn({
+        showGenres: ref(['Drama', 'Comedy']),
+        filterShowsByGenre: mockFilterFn,
+      }),
+    )
+    const wrapper = mkWrapper()
+    const filterWidget = wrapper.findComponent({ name: 'ShowFilterWidget' })
+    await filterWidget.vm.$emit('filterApplied', 'All')
+    expect(mockFilterFn).toHaveBeenCalledWith('All')
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      expect.objectContaining({ query: expect.not.objectContaining({ genre: expect.anything() }) }),
+    )
   })
 })

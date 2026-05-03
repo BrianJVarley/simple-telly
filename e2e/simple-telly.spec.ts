@@ -73,6 +73,85 @@ test.describe('Shows Home View @showsHome', () => {
 
     await expect(searchInput).toHaveValue('')
   })
+
+  test('allows filtering shows by genre', async ({ page }) => {
+    await page.goto('/')
+
+    const genreFilterButton = page.locator('button[aria-label="Filter shows by genre"]')
+    await expect(genreFilterButton).toBeVisible()
+    await genreFilterButton.click()
+
+    const genreOption = page.locator('button[role="menuitem"]').nth(2) // Select the 3rd genre option for testing
+    await expect(genreOption).toBeVisible()
+    const genreName = await genreOption.textContent()
+    await genreOption.click()
+
+    // expect shows genre contains rows with genre label - genreName
+    const showCards = page.locator('[data-testid="show-card"]')
+    await expect(showCards.first()).toBeVisible()
+    await expect(showCards.first().locator(`[aria-label="Genres: ${genreName}"]`)).toBeVisible()
+  })
+
+
+
+  test('selecting a genre sets ?genre= in the URL and shows only that genre @genreFilter', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const filterBtn = page.locator('button[aria-label="Filter shows by genre"]')
+    await filterBtn.click()
+
+    // pick the second option (index 1 = first real genre after "All")
+    const firstGenreOption = page.locator('button[role="menuitem"]').nth(1)
+    const genreName = (await firstGenreOption.textContent())!.trim()
+    await firstGenreOption.click()
+
+    await expect(page).toHaveURL(new RegExp(`[?&]genre=${encodeURIComponent(genreName)}`))
+
+    // All visible genre row headings should match the selected genre
+    const genreHeadings = page.locator('[data-testid="genre-heading"]')
+    const count = await genreHeadings.count()
+    for (let i = 0; i < count; i++) {
+      await expect(genreHeadings.nth(i)).toContainText(genreName)
+    }
+  })
+
+  test('selecting All removes ?genre= from the URL @genreFilter', async ({ page }) => {
+    await page.goto('/')
+
+    const filterBtn = page.locator('button[aria-label="Filter shows by genre"]')
+    await filterBtn.click()
+    const firstGenreOption = page.locator('button[role="menuitem"]').nth(1)
+    await firstGenreOption.click()
+
+    // now select All
+    await filterBtn.click()
+    const allOption = page.locator('button[role="menuitem"]', { hasText: 'All' })
+    await allOption.click()
+
+    await expect(page).not.toHaveURL(/[?&]genre=/)
+  })
+
+  test('back navigation restores genre filter from URL @genreFilter', async ({ page }) => {
+    await page.goto('/')
+
+    const filterBtn = page.locator('button[aria-label="Filter shows by genre"]')
+    await filterBtn.click()
+    const firstGenreOption = page.locator('button[role="menuitem"]').nth(1)
+    const genreName = (await firstGenreOption.textContent())!.trim()
+    await firstGenreOption.click()
+
+    // navigate to a show details page
+    const showCard = page.locator('[data-testid="show-card"]').first()
+    await expect(showCard).toBeVisible()
+    await showCard.click()
+    await expect(page).toHaveURL(/\/shows\/\d+/)
+
+    // go back
+    await page.goBack()
+    await expect(page).toHaveURL(new RegExp(`[?&]genre=${encodeURIComponent(genreName)}`))
+  })
 })
 
 test.describe('Show Details View @showDetails', () => {

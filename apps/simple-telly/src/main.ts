@@ -2,7 +2,7 @@ import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import tooltip from './directives/tooltip'
+import { tooltip } from '@simple-telly/ui'
 
 import App from './App.vue'
 import router from './router'

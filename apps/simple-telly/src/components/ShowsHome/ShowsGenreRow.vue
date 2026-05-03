@@ -23,6 +23,7 @@ function navigateToShowDetails(showId: number) {
   <div class="genre-row-shell pb-4 pr-4 pl-4">
     <h2
       id="genreHeader"
+      data-testid="genre-heading"
       class="genre-row-title text-sm pb-2 font-semibold uppercase tracking-wider px-4 pt-3 pb-1"
     >
       {{ genre }}
@@ -49,6 +50,7 @@ function navigateToShowDetails(showId: number) {
           :key="show.id"
           v-memo="[show.id, show.name, show.rating.average, show.image?.medium]"
           :data-show-id="show.id"
+          data-testid="show-card"
           role="listitem"
           :aria-label="show.name"
           tabindex="0"
@@ -76,6 +78,7 @@ function navigateToShowDetails(showId: number) {
                 >⭐</span
               >
             </p>
+            <p :aria-label="`Genres: ${genre}`" class="text-xs truncate" style="color: var(--color-text-muted)">{{ genre }}</p>
           </div>
         </div>
       </div>
