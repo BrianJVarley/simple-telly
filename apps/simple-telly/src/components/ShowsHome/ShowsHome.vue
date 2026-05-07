@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { useShowList } from '@/composables/useShowList'
 import { useShowSearch } from '@/composables/useShowSearch'
-import { ref, watch, onActivated, onMounted, nextTick } from 'vue'
+import { computed, defineAsyncComponent, ref, watch, onActivated, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import { useShowNavigation } from '@/composables/useShowNavigation'
 import SearchBar from '@/components/ShowsHome/SearchBar.vue'
 import ShowsDesktopGrid from './ShowsDesktopGrid.vue'
 import ShowsSearchResults from './ShowsSearchResults.vue'
-import ShowsMobileList from './ShowsMobileList.vue'
 import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
 import ShowsTopPick from './ShowsTopPick.vue'
 import { ShowFilterWidget } from '@simple-telly/ui'
@@ -42,6 +41,9 @@ const {
   refresh: refreshShows,
 } = useShowList({ page: initialPage })
 const query = ref('')
+const hasActiveQuery = computed(() => query.value.trim().length > 0)
+
+const ShowsMobileList = defineAsyncComponent(() => import('./ShowsMobileList.vue'))
 
 function setShowsPageTitle() {
   setDocumentTitle('Shows')
@@ -146,14 +148,14 @@ watch(
   </div>
   <Transition name="fade">
     <ShowsTopPick
-      v-if="!isMobileBp && !query && showsTopPick"
+      v-if="!isMobileBp && !hasActiveQuery && showsTopPick"
       :show="showsTopPick"
       @select="navigateToShowDetails"
     />
   </Transition>
 
   <ShowsDesktopGrid
-    v-if="!isMobileBp"
+    v-if="!isMobileBp && !hasActiveQuery"
     :shows="showsSortedByGenre"
     :isLoading="isLoadingShows"
     :error="showsListError"
