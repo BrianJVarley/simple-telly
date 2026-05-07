@@ -1,6 +1,31 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  type NavigationGuardNext,
+  type RouteLocationNormalized,
+} from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 
+// Route Guards
+
+/**
+ * Remove query parameters from the URL when next route doesn't need them.
+ * @param to
+ * @param _from
+ * @param next
+ */
+function removeQueryParams(
+  to: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
+  next: NavigationGuardNext,
+) {
+  if (Object.keys(to.query).length > 0) {
+    next({ path: to.path, query: {} })
+    return
+  }
+
+  next()
+}
 const router = createRouter({
   scrollBehavior() {
     return { top: 0 }
@@ -21,7 +46,8 @@ const router = createRouter({
       path: '/shows/:id',
       name: 'show-details',
       component: () => import('../views/ShowDetails.vue'),
-      props: true,
+      props: (route) => ({ id: Number(route.params.id) }),
+      beforeEnter: [removeQueryParams],
     },
   ],
 })

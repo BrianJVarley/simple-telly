@@ -109,7 +109,7 @@ Pull requests trigger the [PR workflow](.github/workflows/pull-request-checks.ym
 - Optimizations:
   - Image sources loaded using a mix of lazy loading and low vs eager fetch priority where needed. In addition computed was used to load some image sources. This improved First Contentful Paint metrics in Chrome Lighthouse performance scan (`0.4s`). See: [Lighthouse scan report](./performance-reports-chrome/simple-telly-v1-perf-report-1.html)
   - Search uses a debounce function to prevent spamming search requests.
-  - Shows are loaded by page rather than one large block of data. This reduces load time and rendering effort of scrollers.
+  - Shows are loaded by page rather than one large block of data. This reduces load time and rendering effort of page.
   - In mobile views, a tv shows are batched by page as user scrolls to the end of the list.
 - A11Y:
   - Accessibility best practices adopted for voice over screen reader, using aria-\* attributed where needed.

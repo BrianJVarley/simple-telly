@@ -54,7 +54,7 @@ function onClear() {
 
 function navigateToShowDetails(showId: number) {
   captureBeforeNavigate(showId, { saveScroll: !isMobileBp.value })
-  router.push({ name: 'show-details', params: { id: showId }, query: {} })
+  router.push({ name: 'show-details', params: { id: showId }, query: { page: route.query.page } })
 }
 
 /**
