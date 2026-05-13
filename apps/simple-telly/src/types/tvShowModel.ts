@@ -8,7 +8,7 @@ export interface Show {
   language: string
   schedule: { time: string; days: string[] }
   genres: string[]
-  status: string
+  status?: string
   rating: { average: number | null }
   network: { id: number; name: string } | null
   summary: string | null

@@ -12,6 +12,7 @@ const mockRouterPush = vi.hoisted(() => vi.fn())
 const mockRouterReplace = vi.hoisted(() => vi.fn())
 const useShowSearchMock = vi.hoisted(() => vi.fn())
 const useShowListMock = vi.hoisted(() => vi.fn())
+const useShowGenresMock = vi.hoisted(() => vi.fn())
 const useBreakpointsMock = vi.hoisted(() => vi.fn())
 
 let mockRouteQueryValue: Record<string, string> = {}
@@ -27,6 +28,10 @@ vi.mock('@/composables/useShowSearch', () => ({
 
 vi.mock('@/composables/useShowList', () => ({
   useShowList: useShowListMock,
+}))
+
+vi.mock('@/composables/useShowGenres', () => ({
+  useShowGenres: useShowGenresMock,
 }))
 
 vi.mock('@heroicons/vue/24/outline', () => ({
@@ -116,6 +121,10 @@ describe('ShowsHome', () => {
       clear: mockClear,
     })
     useShowListMock.mockReturnValue(makeUseShowListReturn())
+    useShowGenresMock.mockReturnValue({
+      genres: ref([]),
+      totalCount: computed(() => 0),
+    })
   })
 
   it('renders the search toggle icon', () => {
@@ -389,10 +398,13 @@ describe('ShowsHome', () => {
     const mockFilterFn = vi.fn()
     useShowListMock.mockReturnValue(
       makeUseShowListReturn({
-        showGenres: ref(['Drama', 'Comedy', 'Action']),
         filterShowsByGenre: mockFilterFn,
       }),
     )
+    useShowGenresMock.mockReturnValue({
+      genres: ref(['Drama', 'Comedy', 'Action']),
+      totalCount: computed(() => 3),
+    })
     const wrapper = mkWrapper()
     const filterWidget = wrapper.findComponent({ name: 'ShowFilterWidget' })
     expect(filterWidget.exists()).toBe(true)

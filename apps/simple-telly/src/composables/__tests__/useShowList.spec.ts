@@ -121,6 +121,24 @@ describe('useShowList', () => {
     expect(showsTopPick.value).toBe(null)
   })
 
+  it('backfills top pick from page 0 when initialized on a later page', async () => {
+    const pageTwoShows = [makeShow(10, 'Drama', 5.0), makeShow(11, 'Comedy', 6.0)]
+    const pageZeroShows = [makeShow(1, 'Drama', 8.5), makeShow(2, 'Comedy', 9.2)]
+
+    vi.mocked(api.tvmazeApi.getShows)
+      .mockResolvedValueOnce(pageTwoShows)
+      .mockResolvedValueOnce(pageZeroShows)
+
+    const { showsTopPick, shows: showsRef } = useComposable(() => useShowList({ page: 2 }))
+    await nextTick()
+    await nextTick()
+
+    expect(showsRef.value.map((show) => show.id)).toEqual([10, 11])
+    expect(showsTopPick.value?.id).toBe(2)
+    expect(vi.mocked(api.tvmazeApi.getShows)).toHaveBeenNthCalledWith(1, 2)
+    expect(vi.mocked(api.tvmazeApi.getShows)).toHaveBeenNthCalledWith(2, 0)
+  })
+
   it('sorts null ratings to the bottom within genre groups', async () => {
     const shows = [
       makeShow(1, 'Drama', null),
@@ -193,17 +211,6 @@ describe('useShowList', () => {
     await nextTick()
     expect(showsSortedByGenre.value.has('Drama')).toBe(true)
     expect(showsSortedByGenre.value.has('Comedy')).toBe(true)
-  })
-
-  it('return show genres list', async () => {
-    const shows = [makeShow(1, 'Drama'), makeShow(2, 'Comedy'), makeShow(3, 'Drama')]
-    vi.mocked(api.tvmazeApi.getShows).mockResolvedValue(shows)
-
-    const { showGenres } = useComposable(() => useShowList({ page: 0 }))
-    await nextTick()
-    await nextTick()
-    expect(showGenres.value).toContain('Drama')
-    expect(showGenres.value).toContain('Comedy')
   })
 
   it('falls back to "Other" for shows with no genres', async () => {

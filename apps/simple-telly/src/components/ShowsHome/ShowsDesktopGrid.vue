@@ -54,6 +54,7 @@ const emit = defineEmits<{
         </div>
         <ShowsGenreRow
           v-for="[genre, genreShows] in shows"
+          v-memo="[genre, genreShows]"
           :key="genre"
           :genre="genre"
           :shows="genreShows"

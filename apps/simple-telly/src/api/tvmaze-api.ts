@@ -16,6 +16,7 @@ async function apiFetch<T>(path: string): Promise<T> {
 }
 
 export const tvmazeApi = {
+
   searchShows: (query: string) =>
     apiFetch<SearchResult[]>(`/search/shows?q=${encodeURIComponent(query)}`),
 

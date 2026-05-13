@@ -75,7 +75,7 @@ watch(
           </h1>
 
           <div class="flex gap-2 flex-wrap mb-4" role="list" aria-label="Genres">
-            <span v-for="genre in show.genres" :key="genre" role="listitem" class="info-chip">
+            <span v-for="genre in show.genres" v-memo="[genre]" :key="genre" role="listitem" class="info-chip">
               {{ genre }}
             </span>
           </div>

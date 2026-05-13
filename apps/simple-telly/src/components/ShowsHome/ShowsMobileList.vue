@@ -71,7 +71,7 @@ function onScroll(event: Event) {
     />
     <template v-else>
       <div role="list" :aria-busy="isLoading">
-        <div v-for="row in rows" :key="row.key">
+        <div v-for="row in rows" v-memo="[row.key]" :key="row.key">
           <div
             v-if="row.type === 'genre'"
             class="sticky top-0 z-10 py-2"

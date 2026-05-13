@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, watch, type ComputedRef } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { Show, ShowsByGenre } from '@/types/tvShowModel'
 import { tvmazeApi } from '@/api/tvmaze-api'
 import { useShowsStore } from '@/stores/shows'
@@ -16,7 +16,6 @@ interface LoadOptions {
 type ApiErrorCause = keyof typeof ApiErrorTypes
 
 interface DerivedShowsState {
-  showsTopPick: Show | null
   showsSortedByGenre: ShowsByGenre
 }
 
@@ -52,21 +51,28 @@ export function useShowList(options?: UseShowListOptions) {
     return showIds.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
   })
 
+  const showsTopPick = ref<Show | null>(null)
+
+  function getTopPickFromShows(shows: Show[]): Show | null {
+    if (shows.length === 0) {
+      return null
+    }
+
+    return shows.reduce((topPick, show) => {
+      return (show.rating.average ?? 0) > (topPick.rating.average ?? 0) ? show : topPick
+    })
+  }
+
   const totalShows = computed(() => shows.value.length ?? 0)
 
   const allShows = computed(() => {
     return allShowIds.value.map((id) => showsStore.getById(id)).filter(Boolean) as Show[]
   })
 
-  const derivedShowsState = computed(() => {
+  const derivedShowsState = computed<DerivedShowsState>(() => {
     const groupedShows = new Map<string, Show[]>()
-    let showsTopPick: Show | null = null
 
     for (const show of allShows.value) {
-      if (!showsTopPick || (show.rating.average ?? 0) > (showsTopPick.rating.average ?? 0)) {
-        showsTopPick = show
-      }
-
       const genreKey = show.genres[0] ?? 'Other'
       const genreShows = groupedShows.get(genreKey) ?? []
 
@@ -96,17 +102,11 @@ export function useShowList(options?: UseShowListOptions) {
     ) as ShowsByGenre
 
     return {
-      showsTopPick,
       showsSortedByGenre,
     }
-  }) as ComputedRef<DerivedShowsState>
+  })
 
-  /**
-   * Picks the top rated show on each page.
-   */
-  const showsTopPick = computed(() => derivedShowsState.value.showsTopPick)
   const showsSortedByGenre = computed(() => derivedShowsState.value.showsSortedByGenre)
-  const showGenres = ref<string[]>([])
   const activeGenreFilter = ref<string | null>(null)
 
   const filteredShowsSortedByGenre = computed(() => {
@@ -115,16 +115,8 @@ export function useShowList(options?: UseShowListOptions) {
     }
     const genreShows = showsSortedByGenre.value.get(activeGenreFilter.value)
     if (!genreShows) return new Map() as ShowsByGenre
+
     return new Map([[activeGenreFilter.value, genreShows]]) as ShowsByGenre
-  })
-
-  const showGenresWatch = watch(showsSortedByGenre, (groupedShows) => {
-    if (groupedShows.size === 0) {
-      return
-    }
-
-    showGenres.value = Array.from(groupedShows.keys())
-    showGenresWatch()
   })
 
   const currentPage = ref<number>(options?.page ?? 0)
@@ -160,6 +152,20 @@ export function useShowList(options?: UseShowListOptions) {
     try {
       const data = await tvmazeApi.getShows(targetPage)
       const nextIds = data.map((show) => show.id)
+
+      // Assign top pick exactly once from page 0 data.
+      if (showsTopPick.value === null) {
+        if (targetPage === 0) {
+          showsTopPick.value = getTopPickFromShows(data)
+        } else {
+          try {
+            const firstPageData = await tvmazeApi.getShows(0)
+            showsStore.upsertMany(firstPageData)
+            showsTopPick.value = getTopPickFromShows(firstPageData)
+          } catch {
+          }
+        }
+      }
 
       showsStore.upsertMany(data)
 
@@ -231,7 +237,6 @@ export function useShowList(options?: UseShowListOptions) {
     hasMorePages,
     isAccumulated,
     totalShows,
-    showGenres,
     nextPage,
     appendNextPage,
     filterShowsByGenre,

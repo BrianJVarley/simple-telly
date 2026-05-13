@@ -11,6 +11,7 @@ import ShowsSearchResults from './ShowsSearchResults.vue'
 import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
 import ShowsTopPick from './ShowsTopPick.vue'
 import { ShowFilterWidget } from '@simple-telly/ui'
+import { useShowGenres } from '@/composables/useShowGenres'
 
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobileBp = breakpoints.smaller('md')
@@ -25,7 +26,6 @@ const initialPage =
 const {
   showsTopPick,
   showsSortedByGenre,
-  showGenres,
   currentPage,
   isAccumulated,
   nextPage,
@@ -40,6 +40,7 @@ const {
   appendNextPage,
   refresh: refreshShows,
 } = useShowList({ page: initialPage })
+const { genres } = useShowGenres();
 const query = ref('')
 const hasActiveQuery = computed(() => query.value.trim().length > 0)
 
@@ -138,7 +139,7 @@ watch(
     <SearchBar data-testid="search-bar" v-model:query="query" @clear="onClear" />
     <ShowFilterWidget
       data-testid="show-filter-widget"
-      :genres="showGenres"
+      :genres="genres"
       @filterApplied="
         (value: string) => {
           onGenreFilterApplied(value)
