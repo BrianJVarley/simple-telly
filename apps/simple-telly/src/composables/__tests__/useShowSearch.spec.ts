@@ -43,6 +43,16 @@ function useComposable<T>(setup: () => T): T {
 }
 
 describe('useShowSearch', () => {
+  function createDeferred<T>() {
+    let resolve!: (value: T | PromiseLike<T>) => void
+    let reject!: (reason?: unknown) => void
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res
+      reject = rej
+    })
+    return { promise, resolve, reject }
+  }
+
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
@@ -77,7 +87,10 @@ describe('useShowSearch', () => {
     await nextTick()
 
     expect(api.tvmazeApi.searchShows).toHaveBeenCalledTimes(1)
-    expect(api.tvmazeApi.searchShows).toHaveBeenCalledWith('abc')
+    expect(api.tvmazeApi.searchShows).toHaveBeenCalledWith(
+      'abc',
+      expect.objectContaining({ signal: expect.any(Object) }),
+    )
   })
 
   it('populates results after search', async () => {
@@ -118,5 +131,38 @@ describe('useShowSearch', () => {
 
     clear()
     expect(results.value).toEqual([])
+  })
+
+  it('ignores stale responses when requests resolve out of order', async () => {
+    const abortedError = Object.assign(new Error('Aborted'), { name: 'AbortError' })
+    const first = createDeferred<SearchResult[]>()
+    const second = createDeferred<SearchResult[]>()
+    let firstSignal: AbortSignal | undefined
+
+    vi.mocked(api.tvmazeApi.searchShows)
+      .mockImplementationOnce((_query, options) => {
+        firstSignal = options?.signal
+        options?.signal?.addEventListener('abort', () => {
+          first.reject(abortedError)
+        })
+        return first.promise
+      })
+      .mockReturnValueOnce(second.promise)
+
+    const { search, results } = useComposable(() => useShowSearch())
+
+    search('old query')
+    vi.advanceTimersByTime(300)
+
+    search('new query')
+    vi.advanceTimersByTime(300)
+
+    expect(firstSignal?.aborted).toBe(true)
+
+    second.resolve([makeResult(2)])
+    await Promise.resolve()
+    await nextTick()
+
+    expect(results.value).toEqual([makeResult(2)])
   })
 })

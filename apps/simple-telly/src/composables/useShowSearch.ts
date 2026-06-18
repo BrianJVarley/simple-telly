@@ -11,28 +11,39 @@ export function useShowSearch() {
   const error = ref<string | null>(null)
 
   let debounceTimer: ReturnType<typeof setTimeout>
+  // Note: We use an AbortController to cancel the previous request if
+  // a new search is initiated before the previous one completes.
+  let currentController: AbortController | null = null
 
   async function search(query: string) {
     clearTimeout(debounceTimer)
+    currentController?.abort()
+    currentController = null
 
     if (!query.trim()) {
       results.value = []
       searchStore.setResults([])
+      isLoading.value = false
       return
     }
 
     debounceTimer = setTimeout(async () => {
+      const controller = new AbortController()
+      currentController = controller
       isLoading.value = true
       error.value = null
 
       try {
-        const data = await tvmazeApi.searchShows(query)
+        const data = await tvmazeApi.searchShows(query, { signal: controller.signal })
         results.value = data
         searchStore.setResults(data)
       } catch (err) {
+        if (controller.signal.aborted) return
         error.value = err instanceof Error ? err.message : 'Search failed'
         results.value = []
       } finally {
+        if (currentController !== controller) return
+        currentController = null
         isLoading.value = false
       }
     }, 300)

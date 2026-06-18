@@ -9,16 +9,18 @@ function createApiError(message: string, cause: keyof typeof ApiErrorTypes): Err
   return error
 }
 
-async function apiFetch<T>(path: string): Promise<T> {
-  const response = await fetch(`${BASE_URL}${path}`)
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = `${BASE_URL}${path}`
+  const response = init ? await fetch(url, init) : await fetch(url)
   errorStatusHandler(response)
   return response.json() as Promise<T>
 }
 
 export const tvmazeApi = {
-
-  searchShows: (query: string) =>
-    apiFetch<SearchResult[]>(`/search/shows?q=${encodeURIComponent(query)}`),
+  searchShows: (query: string, options?: { signal?: AbortSignal }) =>
+    apiFetch<SearchResult[]>(`/search/shows?q=${encodeURIComponent(query)}`, {
+      signal: options?.signal,
+    }),
 
   getShow: (id: number) => apiFetch<Show>(`/shows/${id}`),
 

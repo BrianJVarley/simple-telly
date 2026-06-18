@@ -25,6 +25,7 @@ describe('tvmazeApi', () => {
       const result = await tvmazeApi.searchShows('breaking bad')
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/search/shows?q=breaking%20bad'),
+        expect.objectContaining({ signal: undefined }),
       )
       expect(result).toEqual(data)
     })
@@ -32,7 +33,20 @@ describe('tvmazeApi', () => {
     it('encodes special characters in query', async () => {
       mockResponse([])
       await tvmazeApi.searchShows('G&A Beo')
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('G%26A%20Beo'))
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('G%26A%20Beo'),
+        expect.objectContaining({ signal: undefined }),
+      )
+    })
+
+    it('passes abort signal when provided', async () => {
+      mockResponse([])
+      const controller = new AbortController()
+      await tvmazeApi.searchShows('signal test', { signal: controller.signal })
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/search/shows?q=signal%20test'),
+        expect.objectContaining({ signal: controller.signal }),
+      )
     })
   })
 
