@@ -12,6 +12,7 @@ import { useDocumentTitleHelper } from '@/composables/useDocumentTitleHelper'
 import ShowsTopPick from './ShowsTopPick.vue'
 import { ShowFilterWidget } from '@simple-telly/ui'
 import { useShowGenres } from '@/composables/useShowGenres'
+import { provideHomeState } from './HomeContext.ts'
 
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobileBp = breakpoints.smaller('md')
@@ -40,11 +41,35 @@ const {
   appendNextPage,
   refresh: refreshShows,
 } = useShowList({ page: initialPage })
+
 const { genres } = useShowGenres();
+
+
+
+
 const query = ref('')
 const hasActiveQuery = computed(() => query.value.trim().length > 0)
 
 const ShowsMobileList = defineAsyncComponent(() => import('./ShowsMobileList.vue'))
+
+
+/**
+ * Using type injection keys to provide state to child components without prop drilling 
+ **/
+provideHomeState({
+  query: query,
+  hasActiveQuery,
+  results: results,
+  searchLoading: isLoading,
+  searchError: error,
+  showsByGenre: showsSortedByGenre,
+  showsTopPick: showsTopPick,
+  currentPage: currentPage,
+  totalShows: totalShows,
+  listLoading: isLoadingShows,
+  listError: showsListError,
+  isMobile: isMobileBp,
+})
 
 function setShowsPageTitle() {
   setDocumentTitle('Shows')
@@ -157,11 +182,6 @@ watch(
 
   <ShowsDesktopGrid
     v-if="!isMobileBp && !hasActiveQuery"
-    :shows="showsSortedByGenre"
-    :isLoading="isLoadingShows"
-    :error="showsListError"
-    :currentPage="currentPage + 1"
-    :hasSearchResults="results.length > 0"
     @refresh="refreshShows"
     @goToFirstPage="goToFirstPage"
     @nextPage="nextPage"

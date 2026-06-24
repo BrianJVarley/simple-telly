@@ -35,16 +35,6 @@
 
 ---
 
-## `provide` / `inject` with TypeScript
-**Goal:** Pass context down a component tree without prop drilling
-
-- [ ] Create an injection key using `InjectionKey<T>` from Vue
-- [ ] Provide a simple context at app or layout level (e.g. current user preferences or a theme token)
-- [ ] Inject and consume it in a deeply nested component
-- [ ] Ensure the injected value is fully typed — no `unknown` leaking through
-- [ ] **Stretch:** wrap provide/inject in a composable (`usePreferences()`) to hide the key
-
----
 
 ## Vitest Unit Tests
 **Goal:** Test a composable and a Pinia store in isolation
